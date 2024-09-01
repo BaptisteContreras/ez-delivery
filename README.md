@@ -17,3 +17,9 @@ Then fill the config fields
 ```
 castor create-package <project>
 ```
+
+## Package application
+
+```
+vendor/bin/castor repack --app-name ez-delivery
+```

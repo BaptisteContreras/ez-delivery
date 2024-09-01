@@ -1,0 +1,8 @@
+{
+  "blacklist": [
+    "var",
+    "vendor",
+    "docker",
+    "README.md"
+  ]
+}
