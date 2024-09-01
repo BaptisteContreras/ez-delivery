@@ -1,4 +1,4 @@
-# EZ DELIVER
+# EZ DELIVERY
 
 Tool to create a release branch with commits from pull requests linked to a Github issue with specific labels
 
