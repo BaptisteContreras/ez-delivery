@@ -1,0 +1,10 @@
+services:
+  ezdeliver-php:
+    user: $UID
+    build: './php'
+    volumes:
+      - ../:/app
+      - ../var:/root/.ez
+      - ../../test:/test
+      - ../../.ssh:/root/.ssh
+      - ./php/custom.ini:/opt/bitnami/php/etc/conf.d/custom.ini

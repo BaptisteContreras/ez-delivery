@@ -1,0 +1,19 @@
+{
+    "name": "baptiste-contreras/ez-deliver",
+    "type": "project",
+    "require": {
+        "jolicode/castor": "^0.18.0",
+        "php": "^8.3"
+    },
+
+    "authors": [
+        {
+            "name": "Baptiste CONTRERAS"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
+        }
+    }
+}
