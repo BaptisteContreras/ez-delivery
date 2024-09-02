@@ -31,5 +31,5 @@ docker build --target prod -f prod\Dockerfile -t ez-delivery .
 ```
 
 ```
-docker run -v ~/.ssh:/home/ez-delivery/.ssh -v ~/ez-deliver/var/:/home/ez-delivery/.ez  -v ~/.gitconfig:/home/ez-delivery/.gitconfig -v $(pwd):/app -e USER=$UID  -it base_prod:latest ez-delivery
+docker run -v ~/.ssh:/home/ez-delivery/.ssh -v ~/ez-deliver/var/:/home/ez-delivery/.ez  -v ~/.gitconfig:/home/ez-delivery/.gitconfig -v $(pwd):/app -e USER=$UID  -it  ghcr.io/baptistecontreras/ez-delivery:latest ez-delivery
 ```

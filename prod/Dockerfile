@@ -38,6 +38,7 @@ RUN composer install -o --prefer-dist --no-cache
 RUN vendor/bin/castor repack --app-name ez-delivery
 
 FROM base as prod
+LABEL org.opencontainers.image.source="https://github.com/BaptisteContreras/ez-delivery"
 
 WORKDIR /app
 
