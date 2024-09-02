@@ -340,7 +340,7 @@ function doMerge(array $prsToDeliver, Context $context, array $config, array $en
     io()->progressFinish();
 
 
-    if (io()->choice(sprintf('push new branch %s ?', $branchName), [YES, NO], YES)) {
+    if (YES === io()->choice(sprintf('push new branch %s ?', $branchName), [YES, NO], YES)) {
         run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
 
         io()->success('branch pushed');
