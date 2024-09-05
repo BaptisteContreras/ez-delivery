@@ -193,7 +193,7 @@ function createPackage(string $project): void
 
     $rawPrs = json_decode(http_request('POST', 'https://api.github.com/graphql', [
         'body' => sprintf('{
-                    "query": "query ($owner: String!, $repo: String!, $first: Int!, $after: String) { repository(owner: $owner, name: $repo) { pullRequests(first: $first, after: $after) { edges { node { id number title commits(first: 200) { edges { node { commit { oid message committedDate } } } } closingIssuesReferences(first: 1) { edges { node { id number title  labels(first: 30) { edges { node {  name } } } } } } } } pageInfo { endCursor hasNextPage } } } }",
+                    "query": "query ($owner: String!, $repo: String!, $first: Int!, $after: String) { repository(owner: $owner, name: $repo) { pullRequests(first: $first, after: $after, states: OPEN) { edges { node { id number title commits(first: 200) { edges { node { commit { oid message committedDate } } } } closingIssuesReferences(first: 1) { edges { node { id number title  labels(first: 30) { edges { node {  name } } } } } } } } pageInfo { endCursor hasNextPage } } } }",
                     "variables": {
                         "owner": "%s", 
                         "repo": "%s",    
