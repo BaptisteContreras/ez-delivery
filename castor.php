@@ -243,8 +243,6 @@ function createPackage(string $project): void
 
 function resume(Release $release, Context $context, array $config, array $envConfig): int
 {
-
-
     $conflictingPr = $release->getConflictingPr();
     $conflictingCommit = $release->getConflictingCommit();
 
@@ -339,6 +337,7 @@ function doMerge(array $prsToDeliver, Context $context, array $config, array $en
 
     io()->progressFinish();
 
+    addGitReleaseInfo($prsToDeliver, $context);
 
     if (YES === io()->choice(sprintf('push new branch %s ?', $branchName), [YES, NO], YES)) {
         run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
@@ -347,6 +346,29 @@ function doMerge(array $prsToDeliver, Context $context, array $config, array $en
     }
 }
 
+/**
+ * @param array<Pr> $prsDelivered
+ */
+function addGitReleaseInfo(array $prsDelivered, Context $context): void
+{
+    io()->info('write release info in current branch');
+
+    $gitMessage = sprintf('AUTO RELEASE %s', PHP_EOL);
+    $gitMessage .= sprintf('Number of PRs delivered : %s %s',count($prsDelivered), PHP_EOL);
+    $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL,PHP_EOL,PHP_EOL);
+
+    foreach ($prsDelivered as $pr) {
+        addPrInfo($pr, $gitMessage);
+    }
+
+    capture(sprintf('git commit --allow-empty -m "%s"', $gitMessage), context: $context);
+}
+
+function addPrInfo(Pr $pr, string &$gitMessage): void
+{
+    $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"', $commit->getSha()), $pr->getCommits()));
+    $gitMessage .= sprintf('-   #%s, #%s, \"%s\", %s, [%s] %s', $pr->getId(), $pr->getClosingIssueId(), $pr->getClosingIssueTitle(), $pr->getCommitsCount(), $commits, PHP_EOL);
+}
 
 #[AsContext(name: 'init', default: true)]
 function initContext(): Context
