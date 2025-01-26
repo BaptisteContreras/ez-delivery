@@ -4,6 +4,7 @@ use Castor\Attribute\AsContext;
 use Castor\Attribute\AsListener;
 use Castor\Attribute\AsTask;
 use Castor\Context;
+use Ezdeliver\Factory\PackagerFactory;
 use function Castor\capture;
 use function Castor\fs;
 use function Castor\http_request;
@@ -19,128 +20,23 @@ const NO = 'no';
 
 const DEFAULT_CONFIG_PATH = '~/.ez-delivery';
 const CONFIG_PATH_ENV_VAR = 'EZ_DELIVERY_CONFIG_PATH';
+const GITHUB_REPO = 'GITHUB';
+const GITLAB_REPO = 'GITLAB';
+
+
+#[AsContext(name: 'init', default: true)]
+function defaultContext(): Context
+{
+    return (new Context())->withEnvironment([CONFIG_PATH_ENV_VAR => $_ENV[CONFIG_PATH_ENV_VAR] ?? DEFAULT_CONFIG_PATH]);
+}
+
 #[AsTask(description: 'init project config')]
 function initProjectConfig(): void
 {
-    $context = context();
-    $configPath = $context->environment[CONFIG_PATH_ENV_VAR];
+    PackagerFactory::initFromCastorGlobalContext()
+        ->createPackager()
+        ->initProjectConfig();
 
-    if (!fs()->exists($configPath)) {
-        fs()->mkdir($configPath);
-        io()->success(sprintf('%s config dir created', $configPath));
-    }
-
-    $config = [
-        'project' => io()->ask('Project name', validator: function ($value) use ($configPath) {
-            if (empty($value)) {
-                throw new \Exception('Project name cannot be empty');
-            }
-
-            if (fs()->exists(getProjectConfigPath($value, $configPath))) {
-                throw new \Exception(sprintf('project %s config already exists in %s', $value, $configPath));
-            }
-
-            return $value;
-        }),
-        'src' => io()->ask('Project source path', validator: function ($value) {
-            if (empty($value)) {
-                throw new \Exception('project source path name cannot be empty');
-            }
-
-            if (!fs()->exists($value)) {
-                throw new \Exception(sprintf('project %s does not exists', $value));
-            }
-
-            return $value;
-        }),
-        'baseBranch' => io()->ask('Base branch to create a package', default: 'develop', validator: function ($value) {
-            if (empty($value)) {
-                throw new \Exception('base branch cannot be empty');
-            }
-
-            return $value;
-        }),
-
-        'repo' => [
-            'owner' => io()->ask('Repository owner', validator: function ($value) {
-                if (empty($value)) {
-                    throw new \Exception('repository owner cannot be empty');
-                }
-
-                return $value;
-            }),
-            'name' => io()->ask('Repository name', validator: function ($value) {
-                if (empty($value)) {
-                    throw new \Exception('repository name cannot be empty');
-                }
-
-                return $value;
-            }),
-        ],
-        'githubToken' => io()->askHidden('Github personal token', validator: function ($value) {
-            if (empty($value)) {
-                throw new \Exception('Github personal token cannot be empty');
-            }
-
-            return $value;
-        }),
-        'envs' => [],
-    ];
-
-
-    $config['tmpStorage'] = io()
-        ->ask('Temporary storage directory for paused release', default: sprintf('%s/%s', $configPath, $config['project']), validator: function ($value) {
-            if (empty($value)) {
-                throw new \Exception('temporary storage directory cannot be empty');
-            }
-
-            if (!fs()->exists($value)) {
-                fs()->mkdir($value);
-            };
-
-            return sprintf('%s/%s', $value, 'last');
-        });
-
-    do {
-        io()->title('Add new environnement');
-        $newEnv = [
-            'name' => io()->ask('env name', validator: function ($value) use ($config) {
-                if (empty($value)) {
-                    throw new \Exception('env name cannot be empty');
-                }
-
-                if (count(array_filter($config['envs'], fn(array $env) => $env['name'] === $value)) > 0) {
-                    throw new \Exception(sprintf('env %s already exists', $value));
-                }
-
-                return $value;
-            }),
-            'alreadyDeliveredLabel' => io()->ask('"Already delivered" label name', validator: function ($value) {
-                if (empty($value)) {
-                    throw new \Exception('label name cannot be empty');
-                }
-
-                return $value;
-            }),
-            'toDeliverLabel' => io()->ask('"To deliver" label name', validator: function ($value) {
-                if (empty($value)) {
-                    throw new \Exception('label name cannot be empty');
-                }
-
-                return $value;
-            }),
-        ];
-
-        $config['envs'][] = $newEnv;
-
-        io()->success(sprintf('Successfully added new env %s', $newEnv['name']));
-    } while (YES === io()->choice('Add another env ?', [YES, NO], YES));
-
-
-    $projectConfigPath = getProjectConfigPath($config['project'], $configPath);
-    fs()->dumpFile($projectConfigPath, json_encode($config));
-
-    io()->success(sprintf('new project config %s stored at %s', $config['project'], $projectConfigPath));
 }
 
 function getProjectConfigPath(string $projectName, string $configPath): string
@@ -151,6 +47,11 @@ function getProjectConfigPath(string $projectName, string $configPath): string
 #[AsTask(description: 'Create a package')]
 function createPackage(string $project): void
 {
+    PackagerFactory::initFromCastorGlobalContext()
+        ->createPackager()
+        ->createPackage($project);
+
+    dd('');
     $configPath = context()->environment[CONFIG_PATH_ENV_VAR];
     $config = json_decode(file_get_contents(getProjectConfigPath($project, $configPath)), true);
 
@@ -370,11 +271,7 @@ function addPrInfo(Pr $pr, string &$gitMessage): void
     $gitMessage .= sprintf('-   #%s, #%s, \"%s\", %s, [%s] %s', $pr->getId(), $pr->getClosingIssueId(), $pr->getClosingIssueTitle(), $pr->getCommitsCount(), $commits, PHP_EOL);
 }
 
-#[AsContext(name: 'init', default: true)]
-function initContext(): Context
-{
-    return (new Context())->withEnvironment([CONFIG_PATH_ENV_VAR => $_ENV[CONFIG_PATH_ENV_VAR] ?? DEFAULT_CONFIG_PATH]);
-}
+
 
 final readonly class Issue
 {
