@@ -24,7 +24,11 @@ class RemoteRepo
     public function getPrsToDeliver(ProjectRepoConfig $projectRepoConfig, ProjectEnvConfig $selectedEnv): array
     {
         $prs = $this->selectDriver($projectRepoConfig)->getPrsWithLinkedIssue($projectRepoConfig);
-        dd($prs);
+
+        /** @var array<Pr> $prsToDeliver */
+        $prsToDeliver = array_filter($prs, fn(Pr $pr) => $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel()));
+
+        return $prsToDeliver;
     }
 
     /**

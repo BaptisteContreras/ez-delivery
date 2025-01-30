@@ -26,15 +26,4 @@ final readonly class Issue
     {
         return in_array($label, $this->labels, true);
     }
-
-    public static function buildFromRawData(array $data): self
-    {
-        $labelsData = !empty($data['labels']['edges']) ? $data['labels']['edges'] : [];
-
-        return new self(
-            $data['number'],
-            $data['title'],
-            array_map(fn(array $labelData) => $labelData['node']['name'], $labelsData)
-        );
-    }
 }

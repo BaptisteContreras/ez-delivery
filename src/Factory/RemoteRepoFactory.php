@@ -5,6 +5,7 @@ namespace Ezdeliver\Factory;
 use Ezdeliver\Repo\GithubDriver;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RemoteRepoFactory
 {
@@ -14,6 +15,13 @@ class RemoteRepoFactory
      * @var array<RemoteRepoDriver>|null
      */
     private ?array $remoteRepoDrivers = null;
+
+    public function __construct(
+        private readonly SymfonyStyle $io
+    )
+    {
+    }
+
 
     public function createRemoteRepo(): RemoteRepo
     {
@@ -25,6 +33,6 @@ class RemoteRepoFactory
      */
     private function createRemoteRepoDrivers(): array
     {
-        return $this->remoteRepoDrivers ??= [new GithubDriver()];
+        return $this->remoteRepoDrivers ??= [new GithubDriver($this->io)];
     }
 }

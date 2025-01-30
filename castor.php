@@ -47,9 +47,9 @@ function getProjectConfigPath(string $projectName, string $configPath): string
 #[AsTask(description: 'Create a package')]
 function createPackage(string $project): void
 {
-    PackagerFactory::initFromCastorGlobalContext()
+    exit(PackagerFactory::initFromCastorGlobalContext()
         ->createPackager()
-        ->createPackage($project);
+        ->createPackage($project));
 
     dd('');
     $configPath = context()->environment[CONFIG_PATH_ENV_VAR];

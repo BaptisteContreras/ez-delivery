@@ -67,16 +67,4 @@ final class Pr
     {
         $this->handled = true;
     }
-
-
-    public static function buildFromRawData(array $data): self
-    {
-        $prData = $data['node'];
-        return new self(
-            $prData['number'],
-            $prData['title'],
-            Issue::buildFromRawData($prData['closingIssuesReferences']['edges'][0]['node']),
-            array_map(fn(array $commitData) => Commit::buildFromRawData($commitData), $prData['commits']['edges']),
-        );
-    }
 }

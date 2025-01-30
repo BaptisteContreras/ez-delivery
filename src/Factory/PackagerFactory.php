@@ -18,6 +18,7 @@ class PackagerFactory
     private readonly ConfigHandlerFactory $configHandlerFactory;
     private readonly SfFactory $sfFactory;
     private readonly RemoteRepoFactory $remoteRepoFactory;
+    private readonly GitWorkspaceFactory $gitWorkspaceFactory;
 
     private ?PackageStorageHandler $packageStorageHandler = null;
     private ?Packager $packager = null;
@@ -42,7 +43,8 @@ class PackagerFactory
             $this->getConfigsDirPathFromContext()
         );
 
-        $this->remoteRepoFactory  = new RemoteRepoFactory();
+        $this->remoteRepoFactory  = new RemoteRepoFactory($this->io);
+        $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io);
 
     }
 
@@ -62,8 +64,8 @@ class PackagerFactory
             $this->createInteractionHandler(),
             $this->createPackageStorageHandler(),
             $this->io,
-            $this->createGitDriver(),
             $this->remoteRepoFactory->createRemoteRepo(),
+            $this->gitWorkspaceFactory,
             $this->getConfigsDirPathFromContext()
         );
     }
@@ -78,6 +80,7 @@ class PackagerFactory
         return $this->packageStorageHandler ??= new PackageStorageHandler(
             $this->io,
             $this->fs,
+            $this->sfFactory->createSfSerializer(),
             $this->getConfigsDirPathFromContext()
         );
     }

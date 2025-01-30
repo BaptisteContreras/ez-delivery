@@ -54,16 +54,4 @@ final class Commit
     {
         $this->conflict = true;
     }
-
-
-    public static function buildFromRawData(array $data): self
-    {
-        $commitData = $data['node']['commit'];
-
-        return new self(
-            $commitData['oid'],
-            $commitData['message'],
-            new \DateTimeImmutable($commitData['committedDate']),
-        );
-    }
 }
