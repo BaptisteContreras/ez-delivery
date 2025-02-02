@@ -46,4 +46,9 @@ class GitDriver
     {
         capture('git cherry-pick --skip', context: $context);
     }
+
+    public function push(Context $context, string $branchName): void
+    {
+        run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
+    }
 }

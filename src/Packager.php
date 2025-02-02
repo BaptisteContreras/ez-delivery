@@ -157,15 +157,23 @@ class Packager
       throw new \Exception('Unknown merge result state');
     }
 
-    private function handleMergeSuccess(): int
+    /**
+     * @param array<Pr> $prsDelivered
+     */
+    private function handleMergeSuccess(
+        GitWorkspace $gitWorkspace,
+        array $prsDelivered,
+        string $deliveryBranchName
+    ): int
     {
-//        addGitReleaseInfo($prsToDeliver, $context);
-//
-//        if (YES === io()->choice(sprintf('push new branch %s ?', $branchName), [YES, NO], YES)) {
-//            run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
-//
-//            io()->success('branch pushed');
-//        }
+
+        $gitWorkspace->addGitReleaseInfo($prsDelivered);
+
+        if ($this->interactionHandler->askToPushReleaseBranch($deliveryBranchName)) {
+            $gitWorkspace->pushRelease($deliveryBranchName);
+
+            $this->io->success('branch pushed');
+        }
 
         return self::RETURN_CODE_OK;
     }

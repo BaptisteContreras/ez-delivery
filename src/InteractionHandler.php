@@ -8,6 +8,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InteractionHandler
 {
+    private const string YES = 'yes';
+    private const string NO = 'no';
 
     public function __construct(
         private readonly SymfonyStyle $io
@@ -23,10 +25,10 @@ class InteractionHandler
 
     public function askToProceedRelease(ProjectEnvConfig $selectedEnv): bool
     {
-        return YES === $this->io
+        return self::YES === $this->io
             ->choice(
-                sprintf('Ready to deliver these PRs for env %s ?', $selectedEnv->getName()), [YES, NO],
-                YES
+                sprintf('Ready to deliver these PRs for env %s ?', $selectedEnv->getName()), [self::YES, self::NO],
+                self::YES
             );
     }
 
@@ -41,6 +43,11 @@ class InteractionHandler
     public function askBaseBranch(ProjectConfiguration $projectConfiguration): string
     {
         return $this->io->ask('Enter base branch name', $projectConfiguration->getBaseBranch());
+    }
+
+    public function askToPushReleaseBranch(string $branchName): bool
+    {
+       return YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
     }
 
 }

@@ -71,4 +71,41 @@ class GitWorkspace
 
         return GlobalMergeResult::success();
     }
+
+    /**
+     * @param array<Pr> $prsDelivered
+     */
+    public function addGitReleaseInfo(array $prsDelivered): void
+    {
+        $this->io->info('write release info in current branch');
+
+        $gitMessage = sprintf('AUTO RELEASE %s', PHP_EOL);
+        $gitMessage .= sprintf('Number of PRs delivered : %s %s',count($prsDelivered), PHP_EOL);
+        $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL,PHP_EOL,PHP_EOL);
+
+        foreach ($prsDelivered as $pr) {
+            $gitMessage = $this->addPrInfo($pr, $gitMessage);
+        }
+
+    }
+
+    private function addPrInfo(Pr $pr, string $gitMessage): string
+    {
+        $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"', $commit->getSha()), $pr->getCommits()));
+
+        return sprintf(
+            '%s-   #%s, #%s, \"%s\", %s, [%s] %s',
+            $gitMessage,
+            $pr->getId(),
+            $pr->getClosingIssueId(),
+            $pr->getClosingIssueTitle(),
+            $pr->getCommitsCount(),
+            $commits,
+            PHP_EOL
+        );
+    }
+    public function pushRelease(string $branchName): void
+    {
+        $this->gitDriver->push($this->context, $branchName);
+    }
 }
