@@ -52,6 +52,26 @@ class Packager
 
         if ($this->storageHandler->hasPausedDelivery($projectConfig)) {
             $this->io->warning('Paused delivery found');
+
+            $lastRelease = $this->storageHandler->loadRelease($projectConfig);
+
+            $sameEnvForOldRelease = $lastRelease->getEnv() === $selectedEnv->getName();
+
+            if ($sameEnvForOldRelease && $this->interactionHandler->askToResumeLastRelease()) {
+                return $this->resume(
+                    $lastRelease,
+                    $currentContext,
+                    $projectConfig,
+                    $selectedEnv
+                );
+            }
+
+            if (!$sameEnvForOldRelease) {
+                $this->io->warning('Old delivery for another env, delete it...');
+            }
+
+            $this->storageHandler->purgeLastRelease($projectConfig);
+            dd($lastRelease);
         }
 
         if (!$gitWorkspace->isClear()) {
@@ -90,8 +110,14 @@ class Packager
         $gitWorkspace->createAndCheckoutBranch($deliveryBranchName);
         $this->io->success(sprintf('%s is created', $deliveryBranchName));
 
-        $this->doMerge($prsToDeliver, $currentContext, $projectConfig, $selectedEnv, $gitWorkspace, $deliveryBranchName);
-        dd($prsToDeliver);
+        return $this->doMerge(
+            $prsToDeliver,
+            $currentContext,
+            $projectConfig,
+            $selectedEnv,
+            $gitWorkspace,
+            $deliveryBranchName
+        );
     }
 
     /**
@@ -113,6 +139,17 @@ class Packager
 
     }
 
+    private function resume(
+        Release $release,
+        Context $context,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv
+    ): int
+    {
+
+
+    }
+
     /**
      * @param array<Pr> $prsToDeliver
      */
@@ -129,7 +166,7 @@ class Packager
 
       if ($prsMergeResult->isSuccess()) {
 
-          return $this->handleMergeSuccess();
+          return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName);
       }
 
       if ($prsMergeResult->isOnError()) {

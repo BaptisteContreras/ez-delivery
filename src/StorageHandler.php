@@ -42,9 +42,22 @@ class StorageHandler
         return $storagePath;
     }
 
+    public function loadRelease(ProjectConfiguration $projectConfiguration): Release
+    {
+        $rawData = file_get_contents($this->getProjectLastReleaseStorageDir($projectConfiguration->getProjectName()));
+
+        return $this->serializer->deserialize($rawData, Release::class, self::STORAGE_FORMAT);
+    }
+
     public function hasPausedDelivery(ProjectConfiguration $projectConfiguration): bool
     {
         return $this->fs->exists($this->getProjectLastReleaseStorageDir($projectConfiguration->getProjectName()));
+    }
+
+    public function purgeLastRelease(ProjectConfiguration $projectConfiguration): void
+    {
+        $this->fs->remove($this->getProjectLastReleaseStorageDir($projectConfiguration->getProjectName()));
+        $this->io->info('Removed last delivery');
     }
 
     private function getProjectLastReleaseStorageDir(string $projectName): string

@@ -47,7 +47,12 @@ class InteractionHandler
 
     public function askToPushReleaseBranch(string $branchName): bool
     {
-       return YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
+       return self::YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
+    }
+
+    public function askToResumeLastRelease(): bool
+    {
+        return self::YES === $this->io->choice('Resume paused delivery ?', [self::YES, self::NO], self::YES);
     }
 
 }
