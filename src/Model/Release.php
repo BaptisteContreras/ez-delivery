@@ -2,10 +2,14 @@
 
 namespace Ezdeliver\Model;
 
+use Symfony\Component\Serializer\Attribute\Context;
 use Symfony\Component\Serializer\Attribute\Ignore;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
-final readonly class Release
+readonly class Release
 {
+
+
 
     /**
      * @param array<Pr> $prs
@@ -15,7 +19,9 @@ final readonly class Release
         private int    $currentPrId,
         private string $currentCommitSha,
         private string $env,
-        private string $branchName
+        private string $branchName,
+        #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
+        private \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
     )
     {
     }
@@ -47,6 +53,12 @@ final readonly class Release
     {
         return $this->branchName;
     }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
 
 
 

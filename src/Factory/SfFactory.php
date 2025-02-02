@@ -4,11 +4,14 @@ namespace Ezdeliver\Factory;
 
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -26,7 +29,12 @@ class SfFactory
     public function createSfSerializer(): SerializerInterface
     {
         if (null === $this->serializer) {
-            $this->serializer = new Serializer([$this->createObjectNormalizer(), new ArrayDenormalizer()], [$this->createJsonEncoder()]);
+            $this->serializer = new Serializer([
+                new ArrayDenormalizer(),
+                new DateTimeNormalizer(),
+                new BackedEnumNormalizer(),
+                $this->createObjectNormalizer(),
+            ], [$this->createJsonEncoder()]);
         }
 
         return $this->serializer;
@@ -40,11 +48,11 @@ class SfFactory
     private function createObjectNormalizer(): ObjectNormalizer
     {
         return $this->objectNormalizer ??= new ObjectNormalizer(
-            $this->classMetadataFactory,
+            $this->createMetadataFactory(),
             null,
             null,
-            new PhpDocExtractor(),
-            $this->createClassDiscriminatorFromClassMetadata()
+            new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]),
+            $this->createClassDiscriminatorFromClassMetadata(),
 
         );
     }

@@ -2,6 +2,9 @@
 
 namespace Ezdeliver\Model;
 
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+
 final class Commit
 {
     private bool $handled = false;
@@ -10,6 +13,7 @@ final class Commit
     public function __construct(
         private readonly string            $sha,
         private readonly string            $message,
+        #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
         private readonly \DateTimeImmutable $date,
     )
     {
