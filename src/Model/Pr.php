@@ -4,7 +4,6 @@ namespace Ezdeliver\Model;
 
 final class Pr
 {
-    private bool $handled = false;
 
     /**
      * @param array<Commit> $commits
@@ -13,8 +12,9 @@ final class Pr
         private readonly int    $id,
         private readonly string $title,
         private readonly Issue  $closingIssue,
-        private readonly array  $commits
-    )
+        private readonly array  $commits,
+        private bool $handled = false
+)
     {
     }
 
