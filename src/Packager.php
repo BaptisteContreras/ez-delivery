@@ -286,6 +286,4 @@ class Packager
 
         return self::RETURN_CODE_CONFLICT;
     }
-
-
 }

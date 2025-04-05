@@ -1,7 +1,6 @@
 <?php
 
 use Castor\Attribute\AsContext;
-use Castor\Attribute\AsListener;
 use Castor\Attribute\AsTask;
 use Castor\Context;
 use Ezdeliver\Factory\PackagerFactory;

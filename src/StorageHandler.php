@@ -70,6 +70,4 @@ class StorageHandler
     {
         return sprintf('%s/%s', $this->configsDirPath, $projectName);
     }
-
-
 }
