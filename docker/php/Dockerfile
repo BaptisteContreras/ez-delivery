@@ -22,7 +22,7 @@ RUN curl "https://castor.jolicode.com/install" | bash
 RUN mv /root/.local/bin/castor /usr/local/bin/castor
 
 RUN git config --global --add safe.directory /test
-RUN git config --global user.email "test@localhost"
+RUN git config --global user.email "38988658+BaptisteContreras@users.noreply.github.com"
 RUN git config --global user.name "test"
 RUN apt-get install vim --assume-yes
 

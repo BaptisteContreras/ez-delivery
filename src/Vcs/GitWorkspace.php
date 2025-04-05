@@ -97,11 +97,12 @@ class GitWorkspace
             $gitMessage = $this->addPrInfo($pr, $gitMessage);
         }
 
+        $this->gitDriver->commit($this->context, $gitMessage, true);
     }
 
     private function addPrInfo(Pr $pr, string $gitMessage): string
     {
-        $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"', $commit->getSha()), $pr->getCommits()));
+        $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
 
         return sprintf(
             '%s-   #%s, #%s, \"%s\", %s, [%s] %s',

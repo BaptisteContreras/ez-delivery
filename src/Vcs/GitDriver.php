@@ -56,4 +56,10 @@ class GitDriver
     {
         capture('git cherry-pick --continue', context: $context);
     }
+    public function commit(Context $context, string $message, bool $allowEmpty): void
+    {
+        $extraArgs = $allowEmpty ? '--allow-empty' : '';
+
+        capture(sprintf('git commit %s -m "%s"', $extraArgs, $message), context: $context);
+    }
 }
