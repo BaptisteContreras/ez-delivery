@@ -25,6 +25,16 @@ class GitWorkspace
         return str_contains($this->gitDriver->status($this->context), 'nothing to commit, working tree clean');
     }
 
+    public function hasChangesToBeCommited(): bool
+    {
+        return str_contains($this->gitDriver->status($this->context), 'Changes to be committed');
+    }
+
+    public function getStatus(): string
+    {
+        return $this->gitDriver->status($this->context);
+    }
+
     public function updateAndCheckoutBranch(string $branchName): void
     {
         $this->gitDriver
@@ -107,5 +117,10 @@ class GitWorkspace
     public function pushRelease(string $branchName): void
     {
         $this->gitDriver->push($this->context, $branchName);
+    }
+
+    public function applyConflictResolution(): void
+    {
+        $this->mergeStrategy->applyConflictResolution($this->context);
     }
 }

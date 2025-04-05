@@ -60,6 +60,7 @@ class StorageHandler
         $this->io->info('Removed last delivery');
     }
 
+
     private function getProjectLastReleaseStorageDir(string $projectName): string
     {
         return sprintf('%s/last.json', $this->getProjectTmpStorageDir($projectName));

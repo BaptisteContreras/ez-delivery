@@ -40,6 +40,7 @@ class Packager
         $this->storageHandler->createProjectTmpStorageDir($projectConfig);
     }
 
+
     public function createPackage(string $project): int
     {
         $projectConfig = $this->configHandler->loadProjectConfig($project);
@@ -71,7 +72,6 @@ class Packager
             }
 
             $this->storageHandler->purgeLastRelease($projectConfig);
-            dd($lastRelease);
         }
 
         if (!$gitWorkspace->isClear()) {
@@ -146,8 +146,53 @@ class Packager
         ProjectEnvConfig $selectedEnv
     ): int
     {
+        $conflictingPr = $release->getConflictingPr();
+        $conflictingCommit = $release->getConflictingCommit();
 
+        $this->io->title('Resume delivery');
+        $this->io->info(sprintf(
+            'Delivery paused at PR #%s "%s", commit SHA(%s) "%s"',
+            $conflictingPr->getId(),
+            $conflictingPr->getTitle(),
+            $conflictingCommit->getSha(),
+            $conflictingCommit->getMessage()
+        ));
 
+        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($context);
+
+        if ($gitWorkspace->hasChangesToBeCommited()) {
+            $this->io->title('Applying conflict resolution before resuming delivery');
+            $this->io->info($gitWorkspace->getStatus());
+
+            if(!$this->interactionHandler->askToCommitChanges()) {
+                $this->io->error('Conflict resolution aborted');
+
+                return self::RETURN_CODE_ERROR;
+            }
+
+            $gitWorkspace->applyConflictResolution();
+        }
+
+        if (!$gitWorkspace->isClear()) {
+            $this->io->error('current git state is not clean');
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        $mergeResultCode = $this->doMerge(
+            $release->getPrs(),
+            $context,
+            $projectConfiguration,
+            $selectedEnv,
+            $gitWorkspace,
+            $release->getBranchName()
+        );
+
+        if ($mergeResultCode === self::RETURN_CODE_OK) {
+            $this->storageHandler->purgeLastRelease($projectConfiguration);
+        }
+
+        return $mergeResultCode;
     }
 
     /**
@@ -189,7 +234,6 @@ class Packager
               $deliveryBranchName
           );
       }
-
 
       throw new \Exception('Unknown merge result state');
     }

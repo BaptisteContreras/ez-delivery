@@ -61,4 +61,9 @@ class CherryPickMergeStrategy implements MergeStrategyInterface
 
         return MergeResult::success();
     }
+
+    public function applyConflictResolution(Context $context): void
+    {
+        $this->gitDriver->continueCkerryPick($context);
+    }
 }

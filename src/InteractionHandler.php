@@ -49,6 +49,10 @@ class InteractionHandler
     {
        return self::YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
     }
+    public function askToCommitChanges(): bool
+    {
+       return self::YES === $this->io->choice('Commit theses changes ?', [self::YES, self::NO], self::YES);
+    }
 
     public function askToResumeLastRelease(): bool
     {
