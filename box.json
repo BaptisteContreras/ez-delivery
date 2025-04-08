@@ -2,7 +2,10 @@
   "blacklist": [
     "var",
     "vendor",
+    "prod",
     "docker",
-    "README.md"
+    "README.md",
+    ".php-cs-fixer.dist.php",
+    ".php-cs-fixer.cache"
   ]
 }

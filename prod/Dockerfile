@@ -20,6 +20,7 @@ COPY composer.json /app/composer.json
 COPY composer.lock /app/composer.lock
 COPY castor.php /app/castor.php
 COPY box.json /app/box.json
+COPY src /app/src
 
 RUN mkdir /app/.castor
 
