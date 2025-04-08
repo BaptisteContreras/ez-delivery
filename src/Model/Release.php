@@ -8,22 +8,18 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 readonly class Release
 {
-
-
-
     /**
      * @param array<Pr> $prs
      */
     public function __construct(
-        private array  $prs,
-        private int    $currentPrId,
+        private array $prs,
+        private int $currentPrId,
         private string $currentCommitSha,
         private string $env,
         private string $branchName,
         #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
         private \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
-    )
-    {
+    ) {
     }
 
     /**
@@ -59,18 +55,15 @@ readonly class Release
         return $this->createdAt;
     }
 
-
-
-
     #[Ignore]
     public function getConflictingPr(): Pr
     {
-        return current(array_filter($this->prs, fn(Pr $pr) => $pr->getId() === $this->currentPrId));
+        return current(array_filter($this->prs, fn (Pr $pr) => $pr->getId() === $this->currentPrId));
     }
 
     #[Ignore]
     public function getConflictingCommit(): Commit
     {
-        return current(array_filter($this->getConflictingPr()->getCommits(), fn(Commit $commit) => $commit->getSha() === $this->currentCommitSha));
+        return current(array_filter($this->getConflictingPr()->getCommits(), fn (Commit $commit) => $commit->getSha() === $this->currentCommitSha));
     }
 }

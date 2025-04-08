@@ -16,8 +16,7 @@ class StorageHandler
         private readonly Filesystem $fs,
         private readonly SerializerInterface $serializer,
         private readonly string $configsDirPath,
-    )
-    {
+    ) {
     }
 
     public function initConfigsDir(): void
@@ -33,8 +32,6 @@ class StorageHandler
         return $this->fs->exists($this->getProjectConfigFilePath($projectName));
     }
 
-
-
     public function saveConfig(ProjectConfiguration $projectConfiguration): void
     {
         $configFilePath = $this->getProjectConfigFilePath($projectConfiguration->getProjectName());
@@ -46,7 +43,6 @@ class StorageHandler
             $projectConfiguration->getProjectName(),
             $configFilePath
         ));
-
     }
 
     public function loadConfig(string $projectName): ProjectConfiguration
@@ -60,6 +56,4 @@ class StorageHandler
     {
         return sprintf('%s/%s.json', $this->configsDirPath, $projectName);
     }
-
-
 }

@@ -6,20 +6,18 @@ use Castor\Context;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\Result\GlobalMergeResult;
-use Ezdeliver\Vcs\Result\MergeResult;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class GitWorkspace
 {
-
     public function __construct(
         private readonly GitDriver $gitDriver,
         private readonly Context $context,
         private readonly MergeStrategyInterface $mergeStrategy,
-        private readonly SymfonyStyle $io
-    )
-    {
+        private readonly SymfonyStyle $io,
+    ) {
     }
+
     public function isClear(): bool
     {
         return str_contains($this->gitDriver->status($this->context), 'nothing to commit, working tree clean');
@@ -45,7 +43,7 @@ class GitWorkspace
 
     public function createAndCheckoutBranch(string $branchName): void
     {
-        $this->gitDriver->checkout($this->context, $branchName,true);
+        $this->gitDriver->checkout($this->context, $branchName, true);
     }
 
     /**
@@ -56,7 +54,9 @@ class GitWorkspace
         $this->io->progressStart(count($prsToDeliver));
 
         foreach ($prsToDeliver as $currentPrToDeliver) {
-            if ($currentPrToDeliver->isHandled()) continue;
+            if ($currentPrToDeliver->isHandled()) {
+                continue;
+            }
 
             $this->io->info(sprintf('handling PR #%s : %s', $currentPrToDeliver->getId(), $currentPrToDeliver->getTitle()));
 
@@ -76,7 +76,6 @@ class GitWorkspace
             $this->io->progressAdvance();
         }
 
-
         $this->io->progressFinish();
 
         return GlobalMergeResult::success();
@@ -90,8 +89,8 @@ class GitWorkspace
         $this->io->info('write release info in current branch');
 
         $gitMessage = sprintf('AUTO RELEASE %s', PHP_EOL);
-        $gitMessage .= sprintf('Number of PRs delivered : %s %s',count($prsDelivered), PHP_EOL);
-        $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL,PHP_EOL,PHP_EOL);
+        $gitMessage .= sprintf('Number of PRs delivered : %s %s', count($prsDelivered), PHP_EOL);
+        $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
 
         foreach ($prsDelivered as $pr) {
             $gitMessage = $this->addPrInfo($pr, $gitMessage);
@@ -102,7 +101,7 @@ class GitWorkspace
 
     private function addPrInfo(Pr $pr, string $gitMessage): string
     {
-        $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
+        $commits = implode(';', array_map(fn (Commit $commit) => sprintf('\\"%s\\"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
 
         return sprintf(
             '%s-   #!%s, #%s, \"%s\", %s, [%s] %s',
@@ -115,6 +114,7 @@ class GitWorkspace
             PHP_EOL
         );
     }
+
     public function pushRelease(string $branchName): void
     {
         $this->gitDriver->push($this->context, $branchName);

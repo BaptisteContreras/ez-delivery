@@ -10,9 +10,7 @@ class GithubRepoConfig extends ProjectRepoConfig
         private readonly string $owner,
         string $name,
         string $apiToken,
-
-    )
-    {
+    ) {
         parent::__construct($name, $apiToken, self::TYPE);
     }
 
@@ -20,7 +18,4 @@ class GithubRepoConfig extends ProjectRepoConfig
     {
         return $this->owner;
     }
-
-
-
 }

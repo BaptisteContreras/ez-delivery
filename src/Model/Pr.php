@@ -4,18 +4,16 @@ namespace Ezdeliver\Model;
 
 final class Pr
 {
-
     /**
      * @param array<Commit> $commits
      */
     public function __construct(
-        private readonly int    $id,
+        private readonly int $id,
         private readonly string $title,
-        private readonly Issue  $closingIssue,
-        private readonly array  $commits,
-        private bool $handled = false
-)
-    {
+        private readonly Issue $closingIssue,
+        private readonly array $commits,
+        private bool $handled = false,
+    ) {
     }
 
     public function getId(): int

@@ -6,7 +6,7 @@ use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
 
 #[DiscriminatorMap(
     typeProperty: 'type',
-    mapping:  [
+    mapping: [
         GithubRepoConfig::TYPE => GithubRepoConfig::class,
         GitlabRepoConfig::TYPE => GitlabRepoConfig::class,
     ]
@@ -17,8 +17,7 @@ abstract class ProjectRepoConfig
         private readonly string $name,
         private readonly string $apiToken,
         private readonly string $type,
-    )
-    {
+    ) {
     }
 
     public function getName(): string
@@ -35,7 +34,4 @@ abstract class ProjectRepoConfig
     {
         return $this->type;
     }
-
-
-
 }

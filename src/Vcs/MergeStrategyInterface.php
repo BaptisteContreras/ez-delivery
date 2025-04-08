@@ -3,7 +3,6 @@
 namespace Ezdeliver\Vcs;
 
 use Castor\Context;
-use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\Result\MergeResult;
 

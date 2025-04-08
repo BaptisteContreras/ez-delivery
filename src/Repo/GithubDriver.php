@@ -4,21 +4,16 @@ namespace Ezdeliver\Repo;
 
 use Ezdeliver\Config\Model\GithubRepoConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
-use Ezdeliver\Model\Pr;
 use Ezdeliver\Repo\Converter\GithubRawDataConverter;
 use Symfony\Component\Console\Style\SymfonyStyle;
+
 use function Castor\http_request;
 
 class GithubDriver implements RemoteRepoDriver
 {
-
-
     public function __construct(
-        private readonly SymfonyStyle $io
-    )
-    {
+        private readonly SymfonyStyle $io,
+    ) {
     }
 
     public function support(ProjectRepoConfig $projectRepoConfig): bool
@@ -44,13 +39,13 @@ class GithubDriver implements RemoteRepoDriver
                     }
                   }', $projectRepoConfig->getOwner(), $projectRepoConfig->getName()),
             'headers' => [
-                'Authorization' => sprintf('bearer %s', $projectRepoConfig->getApiToken())
-            ]
+                'Authorization' => sprintf('bearer %s', $projectRepoConfig->getApiToken()),
+            ],
         ])->getContent(), true);
 
-        $rawPrsWithLinkedIssue = array_filter($rawPrs['data']['repository']['pullRequests']['edges'], fn(array $pr) => isset($pr['node']['closingIssuesReferences']['edges'][0]['node']));
+        $rawPrsWithLinkedIssue = array_filter($rawPrs['data']['repository']['pullRequests']['edges'], fn (array $pr) => isset($pr['node']['closingIssuesReferences']['edges'][0]['node']));
 
-        $prs = array_map(fn(array $pr) => GithubRawDataConverter::buildPrFromRawData($pr), $rawPrsWithLinkedIssue);
+        $prs = array_map(fn (array $pr) => GithubRawDataConverter::buildPrFromRawData($pr), $rawPrsWithLinkedIssue);
 
         return $prs;
     }

@@ -3,17 +3,10 @@
 namespace Ezdeliver\Config\Model;
 
 use Symfony\Component\Serializer\Attribute\Ignore;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 
 class ProjectConfiguration
 {
-
-
     /**
-     * @param string $projectName
-     * @param string $src
-     * @param string $baseBranch
-     * @param ProjectRepoConfig $repo
      * @param array<ProjectEnvConfig> $envs
      */
     public function __construct(
@@ -21,9 +14,8 @@ class ProjectConfiguration
         private readonly string $src,
         private readonly string $baseBranch,
         private readonly ProjectRepoConfig $repo,
-        private  array $envs
-    )
-    {
+        private array $envs,
+    ) {
     }
 
     public function getProjectName(): string
@@ -65,8 +57,4 @@ class ProjectConfiguration
 
         return $env;
     }
-
-
-
-
 }

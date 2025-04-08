@@ -10,9 +10,7 @@ class GitlabRepoConfig extends ProjectRepoConfig
         private readonly string $namespace,
         string $name,
         string $apiToken,
-
-    )
-    {
+    ) {
         parent::__construct($name, $apiToken, self::TYPE);
     }
 
@@ -20,8 +18,4 @@ class GitlabRepoConfig extends ProjectRepoConfig
     {
         return $this->namespace;
     }
-
-
-
-
 }

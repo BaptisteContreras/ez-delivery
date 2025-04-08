@@ -11,7 +11,6 @@ use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\Release;
 use Ezdeliver\Repo\RemoteRepo;
-use Ezdeliver\Vcs\GitDriver;
 use Ezdeliver\Vcs\GitWorkspace;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -30,8 +29,7 @@ class Packager
         private readonly RemoteRepo $remoteRepo,
         private readonly GitWorkspaceFactory $gitWorkspaceFactory,
         private readonly string $configsDirPath,
-    )
-    {
+    ) {
     }
 
     public function initProjectConfig(): void
@@ -39,7 +37,6 @@ class Packager
         $projectConfig = $this->configHandler->createProjectConfig();
         $this->storageHandler->createProjectTmpStorageDir($projectConfig);
     }
-
 
     public function createPackage(string $project): int
     {
@@ -49,7 +46,6 @@ class Packager
         $currentContext = $this->context->withWorkingDirectory($projectConfig->getSrc());
 
         $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($currentContext);
-
 
         if ($this->storageHandler->hasPausedDelivery($projectConfig)) {
             $this->io->warning('Paused delivery found');
@@ -82,13 +78,11 @@ class Packager
 
         $prsToDeliver = $this->remoteRepo->getPrsToDeliver($projectConfig->getRepo(), $selectedEnv);
 
-
         if (empty($prsToDeliver)) {
             $this->io->warning(sprintf('No PR found for env %s', $selectedEnv->getName()));
 
             return self::RETURN_CODE_OK;
         }
-
 
         $this->io->title('About to deliver theses PRs');
         $this->displayPrsToDeliver($prsToDeliver);
@@ -127,7 +121,7 @@ class Packager
     {
         $this->io->table(
             ['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
-            array_map(fn(Pr $pr) => [
+            array_map(fn (Pr $pr) => [
                 $pr->getId(),
                 $pr->getTitle(),
                 $pr->getClosingIssueId(),
@@ -136,16 +130,14 @@ class Packager
                 $prsToDeliver
             )
         );
-
     }
 
     private function resume(
         Release $release,
         Context $context,
         ProjectConfiguration $projectConfiguration,
-        ProjectEnvConfig $selectedEnv
-    ): int
-    {
+        ProjectEnvConfig $selectedEnv,
+    ): int {
         $conflictingPr = $release->getConflictingPr();
         $conflictingCommit = $release->getConflictingCommit();
 
@@ -164,7 +156,7 @@ class Packager
             $this->io->title('Applying conflict resolution before resuming delivery');
             $this->io->info($gitWorkspace->getStatus());
 
-            if(!$this->interactionHandler->askToCommitChanges()) {
+            if (!$this->interactionHandler->askToCommitChanges()) {
                 $this->io->error('Conflict resolution aborted');
 
                 return self::RETURN_CODE_ERROR;
@@ -188,7 +180,7 @@ class Packager
             $release->getBranchName()
         );
 
-        if ($mergeResultCode === self::RETURN_CODE_OK) {
+        if (self::RETURN_CODE_OK === $mergeResultCode) {
             $this->storageHandler->purgeLastRelease($projectConfiguration);
         }
 
@@ -204,38 +196,36 @@ class Packager
         ProjectConfiguration $projectConfiguration,
         ProjectEnvConfig $selectedEnv,
         GitWorkspace $gitWorkspace,
-        string $deliveryBranchName
-    ): int
-    {
-      $prsMergeResult = $gitWorkspace->mergePrs($prsToDeliver);
+        string $deliveryBranchName,
+    ): int {
+        $prsMergeResult = $gitWorkspace->mergePrs($prsToDeliver);
 
-      if ($prsMergeResult->isSuccess()) {
+        if ($prsMergeResult->isSuccess()) {
+            return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName);
+        }
 
-          return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName);
-      }
+        if ($prsMergeResult->isOnError()) {
+            $this->io->error(sprintf(
+                'Stop due to git error on pr #%s : %s',
+                $prsMergeResult->getProblematicPr()->getId(),
+                $prsMergeResult->getProblematicPr()->getTitle()
+            ));
 
-      if ($prsMergeResult->isOnError()) {
-          $this->io->error(sprintf(
-              'Stop due to git error on pr #%s : %s',
-              $prsMergeResult->getProblematicPr()->getId(),
-              $prsMergeResult->getProblematicPr()->getTitle()
-          ));
+            return self::RETURN_CODE_ERROR;
+        }
 
-          return self::RETURN_CODE_ERROR;
-      }
+        if ($prsMergeResult->isConflicting()) {
+            return $this->handleMergeConflict(
+                $prsToDeliver,
+                $prsMergeResult->getProblematicPr(),
+                $prsMergeResult->getConflictingCommit(),
+                $projectConfiguration,
+                $selectedEnv,
+                $deliveryBranchName
+            );
+        }
 
-      if ($prsMergeResult->isConflicting()) {
-          return $this->handleMergeConflict(
-              $prsToDeliver,
-              $prsMergeResult->getProblematicPr(),
-              $prsMergeResult->getConflictingCommit(),
-              $projectConfiguration,
-              $selectedEnv,
-              $deliveryBranchName
-          );
-      }
-
-      throw new \Exception('Unknown merge result state');
+        throw new \Exception('Unknown merge result state');
     }
 
     /**
@@ -244,10 +234,8 @@ class Packager
     private function handleMergeSuccess(
         GitWorkspace $gitWorkspace,
         array $prsDelivered,
-        string $deliveryBranchName
-    ): int
-    {
-
+        string $deliveryBranchName,
+    ): int {
         $gitWorkspace->addGitReleaseInfo($prsDelivered);
 
         if ($this->interactionHandler->askToPushReleaseBranch($deliveryBranchName)) {
@@ -265,9 +253,8 @@ class Packager
         Commit $problematicCommit,
         ProjectConfiguration $projectConfiguration,
         ProjectEnvConfig $selectedEnv,
-        string $deliveryBranchName
-    ): int
-    {
+        string $deliveryBranchName,
+    ): int {
         $release = new Release(
             $prsToDeliver,
             $problematicPr->getId(),
@@ -280,7 +267,6 @@ class Packager
             'current delivery state stored in %s',
             $this->storageHandler->storeRelease($release, $projectConfiguration)
         ));
-
 
         $this->io->warning('delivery pause here. Resolve conflict and restart command to resume delivery');
 

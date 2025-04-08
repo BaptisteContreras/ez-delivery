@@ -25,7 +25,6 @@ class SfFactory
     private ?ClassMetadataFactory $classMetadataFactory = null;
     private ?ClassDiscriminatorFromClassMetadata $classDiscriminatorFromClassMetadata = null;
 
-
     public function createSfSerializer(): SerializerInterface
     {
         if (null === $this->serializer) {
@@ -53,7 +52,6 @@ class SfFactory
             null,
             new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]),
             $this->createClassDiscriminatorFromClassMetadata(),
-
         );
     }
 

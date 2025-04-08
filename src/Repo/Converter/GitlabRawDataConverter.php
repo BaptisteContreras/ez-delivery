@@ -14,15 +14,16 @@ final class GitlabRawDataConverter
             $rawData['iid'],
             $rawData['title'],
             $issue,
-            array_map(fn(array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes'])
+            array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes'])
         );
     }
+
     public static function buildIssueFromRawData(array $rawData): Issue
     {
         return new Issue(
             $rawData['iid'],
             $rawData['title'],
-            array_map(fn(array $labelData) => $labelData['title'], $rawData['labels']['nodes'])
+            array_map(fn (array $labelData) => $labelData['title'], $rawData['labels']['nodes'])
         );
     }
 

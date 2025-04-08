@@ -12,13 +12,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InteractiveBuilder
 {
-
-
     public function __construct(
-        private readonly SymfonyStyle   $io,
+        private readonly SymfonyStyle $io,
         private readonly StorageHandler $storageHandler,
-    )
-    {
+    ) {
     }
 
     public function buildConfig(): ProjectConfiguration
@@ -58,7 +55,6 @@ class InteractiveBuilder
             if (empty($value)) {
                 throw new \Exception(sprintf('%s cannot be empty', $valueName));
             }
-
 
             return $value;
         });

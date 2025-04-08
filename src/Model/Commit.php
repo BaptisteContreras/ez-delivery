@@ -7,17 +7,15 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 
 final class Commit
 {
-
     public function __construct(
-        private readonly string             $sha,
-        private readonly string             $message,
+        private readonly string $sha,
+        private readonly string $message,
         #[Context([DateTimeNormalizer::FORMAT_KEY => 'Y-m-d H:i:s'])]
         private readonly \DateTimeImmutable $date,
 
-        private bool                        $handled = false,
-        private bool                        $conflict = false
-    )
-    {
+        private bool $handled = false,
+        private bool $conflict = false,
+    ) {
     }
 
     public function getSha(): string

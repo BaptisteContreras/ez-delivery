@@ -8,14 +8,12 @@ use Ezdeliver\Model\Pr;
 
 class RemoteRepo
 {
-
     /**
      * @param array<RemoteRepoDriver> $remoteRepoDrivers
      */
     public function __construct(
-        private readonly array $remoteRepoDrivers
-    )
-    {
+        private readonly array $remoteRepoDrivers,
+    ) {
     }
 
     /**
@@ -26,7 +24,7 @@ class RemoteRepo
         $prs = $this->selectDriver($projectRepoConfig)->getPrsWithLinkedIssue($projectRepoConfig);
 
         /** @var array<Pr> $prsToDeliver */
-        $prsToDeliver = array_filter($prs, fn(Pr $pr) => $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel()));
+        $prsToDeliver = array_filter($prs, fn (Pr $pr) => $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel()));
 
         return $prsToDeliver;
     }
@@ -37,8 +35,7 @@ class RemoteRepo
     private function selectDriver(ProjectRepoConfig $projectRepoConfig): RemoteRepoDriver
     {
         foreach ($this->remoteRepoDrivers as $driver) {
-            if ($driver->support($projectRepoConfig))
-            {
+            if ($driver->support($projectRepoConfig)) {
                 return $driver;
             }
         }

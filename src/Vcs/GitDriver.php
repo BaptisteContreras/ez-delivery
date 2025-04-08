@@ -4,6 +4,7 @@ namespace Ezdeliver\Vcs;
 
 use Castor\Context;
 use Ezdeliver\Vcs\Result\CherryPickResult;
+
 use function Castor\capture;
 use function Castor\run;
 
@@ -56,6 +57,7 @@ class GitDriver
     {
         capture('git cherry-pick --continue', context: $context);
     }
+
     public function commit(Context $context, string $message, bool $allowEmpty): void
     {
         $extraArgs = $allowEmpty ? '--allow-empty' : '';

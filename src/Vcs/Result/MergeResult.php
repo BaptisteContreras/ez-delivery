@@ -8,9 +8,8 @@ final readonly class MergeResult
 {
     private function __construct(
         private MergeResultState $state,
-        private ?Commit $conflictingCommit = null
-    )
-    {
+        private ?Commit $conflictingCommit = null,
+    ) {
     }
 
     public static function success(): self
@@ -56,6 +55,4 @@ final readonly class MergeResult
     {
         return MergeResultState::CONFLICT === $this->state;
     }
-
-
 }

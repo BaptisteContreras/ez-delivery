@@ -18,11 +18,9 @@ class RemoteRepoFactory
     private ?array $remoteRepoDrivers = null;
 
     public function __construct(
-        private readonly SymfonyStyle $io
-    )
-    {
+        private readonly SymfonyStyle $io,
+    ) {
     }
-
 
     public function createRemoteRepo(): RemoteRepo
     {

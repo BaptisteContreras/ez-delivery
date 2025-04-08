@@ -12,13 +12,13 @@ class InteractionHandler
     private const string NO = 'no';
 
     public function __construct(
-        private readonly SymfonyStyle $io
+        private readonly SymfonyStyle $io,
     ) {
     }
 
     public function askToSelectEnv(ProjectConfiguration $projectConfiguration): ProjectEnvConfig
     {
-        $envs = array_map(fn(ProjectEnvConfig $projectEnvConfig) => $projectEnvConfig->getName(), $projectConfiguration->getEnvs());
+        $envs = array_map(fn (ProjectEnvConfig $projectEnvConfig) => $projectEnvConfig->getName(), $projectConfiguration->getEnvs());
 
         return $projectConfiguration->getEnv($this->io->choice('Env to use', $envs, current($envs)));
     }
@@ -47,16 +47,16 @@ class InteractionHandler
 
     public function askToPushReleaseBranch(string $branchName): bool
     {
-       return self::YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
+        return self::YES === $this->io->choice(sprintf('push new branch %s ?', $branchName), [self::YES, self::NO], self::YES);
     }
+
     public function askToCommitChanges(): bool
     {
-       return self::YES === $this->io->choice('Commit theses changes ?', [self::YES, self::NO], self::YES);
+        return self::YES === $this->io->choice('Commit theses changes ?', [self::YES, self::NO], self::YES);
     }
 
     public function askToResumeLastRelease(): bool
     {
         return self::YES === $this->io->choice('Resume paused delivery ?', [self::YES, self::NO], self::YES);
     }
-
 }

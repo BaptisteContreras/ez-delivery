@@ -11,11 +11,12 @@ final class GithubRawDataConverter
     public static function buildPrFromRawData(array $rawData): Pr
     {
         $prData = $rawData['node'];
+
         return new Pr(
             $prData['number'],
             $prData['title'],
             self::buildIssueFromRawData($prData['closingIssuesReferences']['edges'][0]['node']),
-            array_map(fn(array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
+            array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
         );
     }
 
@@ -26,7 +27,7 @@ final class GithubRawDataConverter
         return new Issue(
             $rawData['number'],
             $rawData['title'],
-            array_map(fn(array $labelData) => $labelData['node']['name'], $labelsData)
+            array_map(fn (array $labelData) => $labelData['node']['name'], $labelsData)
         );
     }
 

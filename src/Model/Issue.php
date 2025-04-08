@@ -8,11 +8,10 @@ final readonly class Issue
      * @param array<string> $labels
      */
     public function __construct(
-        private int    $id,
+        private int $id,
         private string $title,
-        private array  $labels,
-    )
-    {
+        private array $labels,
+    ) {
     }
 
     public function getId(): int
@@ -29,8 +28,6 @@ final readonly class Issue
     {
         return $this->labels;
     }
-
-
 
     public function hasLabel(string $label): bool
     {

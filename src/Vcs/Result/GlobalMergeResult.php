@@ -7,13 +7,11 @@ use Ezdeliver\Model\Pr;
 
 final readonly class GlobalMergeResult
 {
-
     private function __construct(
         private MergeResultState $state,
         private ?MergeResult $problematicMergeResult = null,
-        private ?Pr $problematicPr = null
-    )
-    {
+        private ?Pr $problematicPr = null,
+    ) {
     }
 
     public static function success(): self
@@ -58,8 +56,6 @@ final readonly class GlobalMergeResult
     {
         return $this->getProblematicMergeResult()->getConflictingCommit();
     }
-
-
 
     public function isSuccess(): bool
     {

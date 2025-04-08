@@ -3,27 +3,24 @@
 namespace Ezdeliver\Vcs;
 
 use Castor\Context;
-use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\Result\MergeResult;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use function Castor\run;
 
 class CherryPickMergeStrategy implements MergeStrategyInterface
 {
-
-
     public function __construct(
         private readonly GitDriver $gitDriver,
-        private readonly SymfonyStyle $io
-    )
-    {
+        private readonly SymfonyStyle $io,
+    ) {
     }
 
     public function mergePr(Context $context, Pr $pr): MergeResult
     {
         foreach ($pr->getCommits() as $commit) {
-            if ($commit->isHandled()) continue;
+            if ($commit->isHandled()) {
+                continue;
+            }
 
             $this->io->info(sprintf('handling commit %s : "%s"', $commit->getSha(), $commit->getMessage()));
 

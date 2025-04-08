@@ -6,13 +6,11 @@ use Symfony\Component\Process\Process;
 
 final readonly class CherryPickResult
 {
-
     public function __construct(
-        private bool   $success,
+        private bool $success,
         private string $errorOutput,
         private string $output,
-    )
-    {
+    ) {
     }
 
     public static function buildFromProcess(Process $process): self
@@ -38,8 +36,4 @@ final readonly class CherryPickResult
     {
         return $this->output;
     }
-
-
-
-
 }

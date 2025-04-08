@@ -4,13 +4,11 @@ namespace Ezdeliver\Config\Model;
 
 class ProjectEnvConfig
 {
-
     public function __construct(
         private readonly string $name,
         private readonly string $alreadyDeliveredLabel,
         private readonly string $toDeliverLabel,
-    )
-    {
+    ) {
     }
 
     public function getName(): string
@@ -27,6 +25,4 @@ class ProjectEnvConfig
     {
         return $this->toDeliverLabel;
     }
-
-
 }

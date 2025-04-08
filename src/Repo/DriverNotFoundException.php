@@ -4,9 +4,8 @@ namespace Ezdeliver\Repo;
 
 class DriverNotFoundException extends \Exception
 {
-
     public function __construct()
     {
-        parent::__construct("Driver not found");
+        parent::__construct('Driver not found');
     }
 }

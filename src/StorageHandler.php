@@ -17,8 +17,7 @@ class StorageHandler
         private readonly Filesystem $fs,
         private readonly SerializerInterface $serializer,
         private readonly string $configsDirPath,
-    )
-    {
+    ) {
     }
 
     public function createProjectTmpStorageDir(ProjectConfiguration $projectConfiguration): self
@@ -59,7 +58,6 @@ class StorageHandler
         $this->fs->remove($this->getProjectLastReleaseStorageDir($projectConfiguration->getProjectName()));
         $this->io->info('Removed last delivery');
     }
-
 
     private function getProjectLastReleaseStorageDir(string $projectName): string
     {

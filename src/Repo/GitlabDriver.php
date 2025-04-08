@@ -2,27 +2,19 @@
 
 namespace Ezdeliver\Repo;
 
-use Ezdeliver\Config\Model\GithubRepoConfig;
 use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
-use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Issue;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Repo\Converter\GithubRawDataConverter;
 use Ezdeliver\Repo\Converter\GitlabRawDataConverter;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use function Castor\context;
+
 use function Castor\http_request;
-use function Symfony\Component\String\s;
 
 class GitlabDriver implements RemoteRepoDriver
 {
-
-
     public function __construct(
-        private readonly SymfonyStyle $io
-    )
-    {
+        private readonly SymfonyStyle $io,
+    ) {
     }
 
     public function support(ProjectRepoConfig $projectRepoConfig): bool
@@ -62,12 +54,12 @@ class GitlabDriver implements RemoteRepoDriver
 
         $rawMrs = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken()
+                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
             ],
-            'json' => ['query' => $mrGraphqlQuery]
+            'json' => ['query' => $mrGraphqlQuery],
         ])->getContent(), true);
 
-        $issuesId = implode(',', array_map(fn(array $mr) => sprintf('"%s"', $this->extractIssueIdFromDescription($mr['description'])), $rawMrs['data']['project']['mergeRequests']['nodes']));
+        $issuesId = implode(',', array_map(fn (array $mr) => sprintf('"%s"', $this->extractIssueIdFromDescription($mr['description'])), $rawMrs['data']['project']['mergeRequests']['nodes']));
 
         $issuesGraphqlQuery = sprintf('
             query {
@@ -90,9 +82,9 @@ class GitlabDriver implements RemoteRepoDriver
 
         $rawIssues = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken()
+                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
             ],
-            'json' => ['query' => $issuesGraphqlQuery]
+            'json' => ['query' => $issuesGraphqlQuery],
         ])->getContent(), true);
 
         $issuesMap = [];
@@ -117,7 +109,7 @@ class GitlabDriver implements RemoteRepoDriver
     }
 
     /**
-     * Only return the first Issue ID referenced
+     * Only return the first Issue ID referenced.
      */
     private function extractIssueIdFromDescription(string $mrDescription): ?int
     {
@@ -126,6 +118,6 @@ class GitlabDriver implements RemoteRepoDriver
 
         $firstIssueId = current($matches[1]);
 
-        return false === $firstIssueId ? null : (int)$firstIssueId;
+        return false === $firstIssueId ? null : (int) $firstIssueId;
     }
 }

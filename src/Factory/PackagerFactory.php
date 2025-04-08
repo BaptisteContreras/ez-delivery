@@ -9,6 +9,7 @@ use Ezdeliver\StorageHandler as PackageStorageHandler;
 use Ezdeliver\Vcs\GitDriver;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
+
 use function Castor\context;
 use function Castor\fs;
 use function Castor\io;
@@ -27,13 +28,11 @@ class PackagerFactory
 
     private ?GitDriver $gitDriver = null;
 
-
     private function __construct(
         private readonly Context $context,
         private readonly SymfonyStyle $io,
         private readonly Filesystem $fs,
-    )
-    {
+    ) {
         $this->sfFactory = new SfFactory();
 
         $this->configHandlerFactory = new ConfigHandlerFactory(
@@ -43,9 +42,8 @@ class PackagerFactory
             $this->getConfigsDirPathFromContext()
         );
 
-        $this->remoteRepoFactory  = new RemoteRepoFactory($this->io);
+        $this->remoteRepoFactory = new RemoteRepoFactory($this->io);
         $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io);
-
     }
 
     public static function initFromCastorGlobalContext(): self
@@ -56,6 +54,7 @@ class PackagerFactory
             fs()
         );
     }
+
     public function createPackager(): Packager
     {
         return $this->packager ??= new Packager(

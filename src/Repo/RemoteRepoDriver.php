@@ -2,7 +2,6 @@
 
 namespace Ezdeliver\Repo;
 
-use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Model\Pr;
 
