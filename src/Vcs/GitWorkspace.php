@@ -105,7 +105,7 @@ class GitWorkspace
         $commits = implode(';', array_map(fn(Commit $commit) => sprintf('\\"%s\\"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
 
         return sprintf(
-            '%s-   #%s, #%s, \"%s\", %s, [%s] %s',
+            '%s-   #!%s, #%s, \"%s\", %s, [%s] %s',
             $gitMessage,
             $pr->getId(),
             $pr->getClosingIssueId(),
