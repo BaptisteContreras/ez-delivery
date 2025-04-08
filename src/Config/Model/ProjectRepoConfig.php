@@ -8,6 +8,7 @@ use Symfony\Component\Serializer\Attribute\DiscriminatorMap;
     typeProperty: 'type',
     mapping:  [
         GithubRepoConfig::TYPE => GithubRepoConfig::class,
+        GitlabRepoConfig::TYPE => GitlabRepoConfig::class,
     ]
 )]
 abstract class ProjectRepoConfig

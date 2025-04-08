@@ -3,6 +3,7 @@
 namespace Ezdeliver\Factory;
 
 use Ezdeliver\Repo\GithubDriver;
+use Ezdeliver\Repo\GitlabDriver;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -33,6 +34,6 @@ class RemoteRepoFactory
      */
     private function createRemoteRepoDrivers(): array
     {
-        return $this->remoteRepoDrivers ??= [new GithubDriver($this->io)];
+        return $this->remoteRepoDrivers ??= [new GithubDriver($this->io), new GitlabDriver($this->io)];
     }
 }

@@ -67,7 +67,11 @@ class InteractiveBuilder
     private function getRepoConfig(string $repoType): ProjectRepoConfig
     {
         return match ($repoType) {
-            GitlabRepoConfig::TYPE => new GitlabRepoConfig(),
+            GitlabRepoConfig::TYPE => new GitlabRepoConfig(
+                namespace: $this->getRequiredValue('Repository namepsace'),
+                name: $this->getRequiredValue('Repository name'),
+                apiToken: $this->getRequiredValue('Gitlab token'),
+            ),
             GithubRepoConfig::TYPE => new GithubRepoConfig(
                 owner: $this->getRequiredValue('Repository owner'),
                 name: $this->getRequiredValue('Repository name'),
