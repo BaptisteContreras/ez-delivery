@@ -14,7 +14,7 @@ final class GitlabRawDataConverter
             $rawData['iid'],
             $rawData['title'],
             $issue,
-            array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes'])
+            array_reverse(array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes']))
         );
     }
 
