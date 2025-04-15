@@ -36,7 +36,7 @@ class InteractionHandler
     {
         return $this->io->ask(
             'Enter delivery branch name',
-            sprintf('%s_%s', $selectedEnv->getName(), (new \DateTimeImmutable())->format('Y-m-d'))
+            sprintf('%s-%s', $selectedEnv->getName(), (new \DateTimeImmutable())->format('Y-m-d_H-i'))
         );
     }
 
