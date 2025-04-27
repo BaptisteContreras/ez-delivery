@@ -109,6 +109,74 @@ class GitlabDriver implements RemoteRepoDriver
     }
 
     /**
+     * @param GitlabRepoConfig $projectRepoConfig
+     */
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void
+    {
+        $this->io->title('Update Gitlab labels');
+
+        if (empty($issuesLabelsUpdates)) {
+            $this->io->info('No label to update');
+
+            return;
+        }
+
+        $this->io->info(sprintf('Updating %s labels', count($issuesLabelsUpdates)));
+        $this->io->info(implode(PHP_EOL, array_map(fn (IssueLabelsUpdate $issueLabelsUpdate) => sprintf('Issue #%s - %s is updated', $issueLabelsUpdate->getIssueId(), $issueLabelsUpdate->getIssueTitle()), $issuesLabelsUpdates)));
+
+        $labelListQuery = sprintf('query { project(fullPath: "%s/%s") { labels(first: 1000) { nodes { id title } } } }', $projectRepoConfig->getNamespace(), $projectRepoConfig->getName());
+
+        $labelList = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
+            'headers' => [
+                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+            ],
+            'json' => ['query' => $labelListQuery],
+        ])->getContent(), true);
+
+        $labelMap = array_column($labelList['data']['project']['labels']['nodes'], 'id', 'title');
+
+        $mutationBody = array_map(
+            fn (IssueLabelsUpdate $issueLabelsUpdate) => sprintf('issue%s: updateIssue(input: {projectPath: "%s/%s" iid: "%s" labelIds: [%s] }) {issue {iid  title} errors }',
+                $issueLabelsUpdate->getIssueId(),
+                $projectRepoConfig->getNamespace(),
+                $projectRepoConfig->getName(),
+                $issueLabelsUpdate->getIssueId(),
+                implode(',', array_map(fn (string $label) => sprintf('"%s"', $labelMap[$label] ?? throw new GitlabLabelCorrespondanceNotFoundException($label)), $issueLabelsUpdate->getLabels()))
+            ), $issuesLabelsUpdates);
+
+        $mrGraphqlQuery = sprintf('mutation { %s }', implode(' ', $mutationBody));
+
+        $result = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
+            'headers' => [
+                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+            ],
+            'json' => ['query' => $mrGraphqlQuery],
+        ])->getContent(), true);
+
+        if (!empty($result['data'])) {
+            foreach ($result['data'] as $issueKey => $issueData) {
+                $errors = $issueData['errors'] ?? [];
+                $issue = $issueData['issue'] ?? [];
+
+                if (!empty($errors)) {
+                    $iid = $issue['iid'] ?? 'unknown';
+                    $title = $issue['title'] ?? 'unknown title';
+
+                    foreach ($errors as $error) {
+                        $this->io->warning(sprintf('Issue #%s (%s): %s', $iid, $title, $error));
+                    }
+                }
+            }
+        }
+
+        if (isset($result['errors'])) {
+            $this->io->error(implode(PHP_EOL, array_map(fn ($error) => $error['message'], $result['errors'])));
+        }
+
+        $this->io->success('Gitlab labels updated');
+    }
+
+    /**
      * Only return the first Issue ID referenced.
      */
     private function extractIssueIdFromDescription(string $mrDescription): ?int
@@ -119,5 +187,10 @@ class GitlabDriver implements RemoteRepoDriver
         $firstIssueId = current($matches[1]);
 
         return false === $firstIssueId ? null : (int) $firstIssueId;
+    }
+
+    public function supportLabelsUpdate(): bool
+    {
+        return true;
     }
 }

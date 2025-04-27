@@ -59,4 +59,9 @@ class InteractionHandler
     {
         return self::YES === $this->io->choice('Resume paused delivery ?', [self::YES, self::NO], self::YES);
     }
+
+    public function askToUpdateLabels(): bool
+    {
+        return self::YES === $this->io->choice('Update labels ?', [self::YES, self::NO], self::YES);
+    }
 }

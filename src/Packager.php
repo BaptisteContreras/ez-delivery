@@ -201,7 +201,7 @@ class Packager
         $prsMergeResult = $gitWorkspace->mergePrs($prsToDeliver);
 
         if ($prsMergeResult->isSuccess()) {
-            return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName);
+            return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName, $projectConfiguration, $selectedEnv);
         }
 
         if ($prsMergeResult->isOnError()) {
@@ -235,6 +235,8 @@ class Packager
         GitWorkspace $gitWorkspace,
         array $prsDelivered,
         string $deliveryBranchName,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
     ): int {
         $gitWorkspace->addGitReleaseInfo($prsDelivered);
 
@@ -242,6 +244,13 @@ class Packager
             $gitWorkspace->pushRelease($deliveryBranchName);
 
             $this->io->success('branch pushed');
+        }
+
+        if (
+            $this->remoteRepo->supportLabelsUpdate($projectConfiguration->getRepo())
+            && $this->interactionHandler->askToUpdateLabels()
+        ) {
+            $this->remoteRepo->updateLabels($projectConfiguration->getRepo(), $prsDelivered, $selectedEnv);
         }
 
         return self::RETURN_CODE_OK;

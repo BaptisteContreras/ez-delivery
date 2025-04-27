@@ -49,4 +49,14 @@ class GithubDriver implements RemoteRepoDriver
 
         return $prs;
     }
+
+    public function supportLabelsUpdate(): bool
+    {
+        return false;
+    }
+
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void
+    {
+        throw new \Exception('Not implemented');
+    }
 }
