@@ -1,4 +1,6 @@
-COMPOSE := UID=$$(id -u) docker compose -f docker/docker-compose.yaml
+SHELL := /bin/bash
+
+COMPOSE := env UID=$$(id -u) docker compose -f docker/docker-compose.yaml
 PHP := $(COMPOSE) run --rm --entrypoint php ezdeliver-php
 IMAGE := ghcr.io/baptistecontreras/ez-delivery
 
