@@ -45,6 +45,12 @@ class GithubDriver implements RemoteRepoDriver
 
         $rawPrsWithLinkedIssue = array_filter($rawPrs['data']['repository']['pullRequests']['edges'], fn (array $pr) => isset($pr['node']['closingIssuesReferences']['edges'][0]['node']));
 
+        $this->verbose(sprintf(
+            'Fetched %d pull request(s) from Github, %d with a linked issue',
+            count($rawPrs['data']['repository']['pullRequests']['edges']),
+            count($rawPrsWithLinkedIssue)
+        ));
+
         $prs = array_map(fn (array $pr) => GithubRawDataConverter::buildPrFromRawData($pr), $rawPrsWithLinkedIssue);
 
         return $prs;
@@ -58,5 +64,12 @@ class GithubDriver implements RemoteRepoDriver
     public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void
     {
         throw new \Exception('Not implemented');
+    }
+
+    private function verbose(string $line): void
+    {
+        if ($this->io->isVerbose()) {
+            $this->io->comment($line);
+        }
     }
 }

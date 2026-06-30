@@ -6,6 +6,7 @@ use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RemoteRepo
 {
@@ -14,6 +15,7 @@ class RemoteRepo
      */
     public function __construct(
         private readonly array $remoteRepoDrivers,
+        private readonly SymfonyStyle $io,
     ) {
     }
 
@@ -25,7 +27,22 @@ class RemoteRepo
         $prs = $this->selectDriver($projectRepoConfig)->getPrsWithLinkedIssue($projectRepoConfig);
 
         /** @var array<Pr> $prsToDeliver */
-        $prsToDeliver = array_filter($prs, fn (Pr $pr) => $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel()));
+        $prsToDeliver = array_filter($prs, function (Pr $pr) use ($selectedEnv) {
+            $matches = $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel());
+
+            $this->verbose(sprintf(
+                'PR #%s (issue #%s "%s") %s: labels [%s] vs to-deliver "%s" / already-delivered "%s"',
+                $pr->getId(),
+                $pr->getClosingIssueId(),
+                $pr->getClosingIssueTitle(),
+                $matches ? 'INCLUDED' : 'excluded',
+                implode(', ', $pr->getClosingIssue()->getLabels()),
+                $selectedEnv->getToDeliverLabel(),
+                $selectedEnv->getAlreadyDeliveredLabel()
+            ));
+
+            return $matches;
+        });
 
         return $prsToDeliver;
     }
@@ -70,5 +87,12 @@ class RemoteRepo
         }
 
         throw new DriverNotFoundException();
+    }
+
+    private function verbose(string $line): void
+    {
+        if ($this->io->isVerbose()) {
+            $this->io->comment($line);
+        }
     }
 }

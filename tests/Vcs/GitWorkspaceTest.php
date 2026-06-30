@@ -15,13 +15,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class GitWorkspaceTest extends TestCase
 {
-    private function makeWorkspace(?GitDriver $gitDriver = null, ?MergeStrategyInterface $strategy = null): GitWorkspace
+    private function makeWorkspace(?GitDriver $gitDriver = null, ?MergeStrategyInterface $strategy = null, ?SymfonyStyle $io = null): GitWorkspace
     {
         return new GitWorkspace(
             $gitDriver ?? $this->createMock(GitDriver::class),
             new Context(),
             $strategy ?? $this->createMock(MergeStrategyInterface::class),
-            $this->createMock(SymfonyStyle::class),
+            $io ?? $this->createMock(SymfonyStyle::class),
         );
     }
 
@@ -154,11 +154,121 @@ class GitWorkspaceTest extends TestCase
             ->method('commit')
             ->willReturnCallback(function ($context, string $message, bool $allowEmpty) use (&$capturedMessage) {
                 $capturedMessage = $message;
+
+                return '';
             });
 
         $this->makeWorkspace($gitDriver)->addGitReleaseInfo([$pr]);
 
         $this->assertStringContainsString('#!42', $capturedMessage);
         $this->assertStringContainsString('sha-abc', $capturedMessage);
+    }
+
+    public function testIsClearLogsStatusOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('status')->willReturn('nothing to commit, working tree clean');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git status: nothing to commit, working tree clean');
+
+        $this->makeWorkspace($gitDriver, io: $io)->isClear();
+    }
+
+    public function testIsClearDoesNotLogWhenNotVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('status')->willReturn('nothing to commit, working tree clean');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(false);
+        $io->expects($this->never())->method('comment');
+
+        $this->makeWorkspace($gitDriver, io: $io)->isClear();
+    }
+
+    public function testGetStatusLogsOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('status')->willReturn('modified: src/Foo.php');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git status: modified: src/Foo.php');
+
+        $this->makeWorkspace($gitDriver, io: $io)->getStatus();
+    }
+
+    public function testUpdateAndCheckoutBranchLogsEachCommandOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('fetchAll')->willReturn('fetch output');
+        $gitDriver->method('checkout')->willReturn('checkout output');
+        $gitDriver->method('pull')->willReturn('pull output');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+
+        $comments = [];
+        $io->expects($this->exactly(3))
+            ->method('comment')
+            ->willReturnCallback(function ($line) use (&$comments) {
+                $comments[] = $line;
+            });
+
+        $this->makeWorkspace($gitDriver, io: $io)->updateAndCheckoutBranch('main');
+
+        $this->assertSame('git fetch --all: fetch output', $comments[0]);
+        $this->assertSame('git checkout: checkout output', $comments[1]);
+        $this->assertSame('git pull --rebase: pull output', $comments[2]);
+    }
+
+    public function testCreateAndCheckoutBranchLogsOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('checkout')->willReturn('checkout -b output');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git checkout -b: checkout -b output');
+
+        $this->makeWorkspace($gitDriver, io: $io)->createAndCheckoutBranch('feature-branch');
+    }
+
+    public function testAddGitReleaseInfoLogsCommitOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('commit')->willReturn('commit output');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git commit: commit output');
+
+        $pr = $this->makePr(1, [$this->makeCommit('sha-abc')]);
+
+        $this->makeWorkspace($gitDriver, io: $io)->addGitReleaseInfo([$pr]);
+    }
+
+    public function testPushReleaseLogsCommandWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git push --set-upstream origin release-branch');
+
+        $this->makeWorkspace($gitDriver, io: $io)->pushRelease('release-branch');
+    }
+
+    public function testPushReleaseDoesNotLogWhenNotVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(false);
+        $io->expects($this->never())->method('comment');
+
+        $this->makeWorkspace($gitDriver, io: $io)->pushRelease('release-branch');
     }
 }

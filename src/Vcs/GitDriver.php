@@ -15,25 +15,19 @@ class GitDriver
         return capture('git status', context: $context);
     }
 
-    public function fetchAll(Context $context): self
+    public function fetchAll(Context $context): string
     {
-        capture('git fetch --all', context: $context);
-
-        return $this;
+        return capture('git fetch --all', context: $context);
     }
 
-    public function checkout(Context $context, string $branchName, bool $create): self
+    public function checkout(Context $context, string $branchName, bool $create): string
     {
-        capture(sprintf('git checkout %s %s', $create ? '-b' : '', $branchName), context: $context);
-
-        return $this;
+        return capture(sprintf('git checkout %s %s', $create ? '-b' : '', $branchName), context: $context);
     }
 
-    public function pull(Context $context, bool $rebase): self
+    public function pull(Context $context, bool $rebase): string
     {
-        capture(sprintf('git pull %s', $rebase ? '--rebase' : ''), context: $context);
-
-        return $this;
+        return capture(sprintf('git pull %s', $rebase ? '--rebase' : ''), context: $context);
     }
 
     public function cherryPick(Context $context, string $commitSha): CherryPickResult
@@ -43,9 +37,9 @@ class GitDriver
         );
     }
 
-    public function skipCkerryPick(Context $context): void
+    public function skipCkerryPick(Context $context): string
     {
-        capture('git cherry-pick --skip', context: $context);
+        return capture('git cherry-pick --skip', context: $context);
     }
 
     public function push(Context $context, string $branchName): void
@@ -53,15 +47,15 @@ class GitDriver
         run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
     }
 
-    public function continueCkerryPick(Context $context): void
+    public function continueCkerryPick(Context $context): string
     {
-        capture('git cherry-pick --continue', context: $context);
+        return capture('git cherry-pick --continue', context: $context);
     }
 
-    public function commit(Context $context, string $message, bool $allowEmpty): void
+    public function commit(Context $context, string $message, bool $allowEmpty): string
     {
         $extraArgs = $allowEmpty ? '--allow-empty' : '';
 
-        capture(sprintf('git commit %s -m "%s"', $extraArgs, $message), context: $context);
+        return capture(sprintf('git commit %s -m "%s"', $extraArgs, $message), context: $context);
     }
 }

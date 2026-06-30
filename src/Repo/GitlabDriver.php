@@ -59,6 +59,8 @@ class GitlabDriver implements RemoteRepoDriver
             'json' => ['query' => $mrGraphqlQuery],
         ])->getContent(), true);
 
+        $this->verbose(sprintf('Fetched %d merge request(s) from Gitlab', count($rawMrs['data']['project']['mergeRequests']['nodes'])));
+
         $issuesId = implode(',', array_map(fn (array $mr) => sprintf('"%s"', $this->extractIssueIdFromDescription($mr['description'])), $rawMrs['data']['project']['mergeRequests']['nodes']));
 
         $issuesGraphqlQuery = sprintf('
@@ -87,6 +89,8 @@ class GitlabDriver implements RemoteRepoDriver
             'json' => ['query' => $issuesGraphqlQuery],
         ])->getContent(), true);
 
+        $this->verbose(sprintf('Fetched %d issue(s) for iids [%s]', count($rawIssues['data']['project']['issues']['nodes']), $issuesId));
+
         $issuesMap = [];
 
         foreach ($rawIssues['data']['project']['issues']['nodes'] as $rawIssue) {
@@ -99,6 +103,8 @@ class GitlabDriver implements RemoteRepoDriver
             $issue = $issuesMap[$this->extractIssueIdFromDescription($rawMr['description'])] ?? null;
 
             if (!$issue) {
+                $this->verbose(sprintf('MR !%s "%s" skipped: no linkable issue found in description', $rawMr['iid'], $rawMr['title']));
+
                 continue;
             }
 
@@ -135,6 +141,8 @@ class GitlabDriver implements RemoteRepoDriver
 
         $labelMap = array_column($labelList['data']['project']['labels']['nodes'], 'id', 'title');
 
+        $this->verbose(sprintf('Resolved %d label(s) from Gitlab project', count($labelMap)));
+
         $mutationBody = array_map(
             fn (IssueLabelsUpdate $issueLabelsUpdate) => sprintf('issue%s: updateIssue(input: {projectPath: "%s/%s" iid: "%s" labelIds: [%s] }) {issue {iid  title} errors }',
                 $issueLabelsUpdate->getIssueId(),
@@ -165,7 +173,11 @@ class GitlabDriver implements RemoteRepoDriver
                     foreach ($errors as $error) {
                         $this->io->warning(sprintf('Issue #%s (%s): %s', $iid, $title, $error));
                     }
+
+                    continue;
                 }
+
+                $this->verbose(sprintf('Issue #%s (%s) mutation confirmed by Gitlab', $issue['iid'] ?? 'unknown', $issue['title'] ?? 'unknown title'));
             }
         }
 
@@ -192,5 +204,12 @@ class GitlabDriver implements RemoteRepoDriver
     public function supportLabelsUpdate(): bool
     {
         return true;
+    }
+
+    private function verbose(string $line): void
+    {
+        if ($this->io->isVerbose()) {
+            $this->io->comment($line);
+        }
     }
 }

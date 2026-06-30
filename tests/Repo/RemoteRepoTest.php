@@ -12,9 +12,15 @@ use Ezdeliver\Repo\IssueLabelsUpdate;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RemoteRepoTest extends TestCase
 {
+    private function makeRemoteRepo(array $drivers, ?SymfonyStyle $io = null): RemoteRepo
+    {
+        return new RemoteRepo($drivers, $io ?? $this->createMock(SymfonyStyle::class));
+    }
+
     private function makeEnv(): ProjectEnvConfig
     {
         return new ProjectEnvConfig('staging', 'delivered:staging', 'to-deliver:staging');
@@ -43,7 +49,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = (new RemoteRepo([$driver]))->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
 
         $this->assertContains($pr, $result);
     }
@@ -54,7 +60,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = (new RemoteRepo([$driver]))->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
 
         $this->assertContains($pr, $result);
     }
@@ -65,9 +71,48 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = (new RemoteRepo([$driver]))->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
 
         $this->assertEmpty($result);
+    }
+
+    public function testGetPrsToDeliverLogsIncludedAndExcludedPrsWhenVerbose(): void
+    {
+        $includedPr = $this->makePr(1, ['to-deliver:staging']);
+        $excludedPr = $this->makePr(2, ['bug']);
+        $driver = $this->makeDriverThatSupports([$includedPr, $excludedPr]);
+        $repoConfig = $this->createMock(ProjectRepoConfig::class);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+
+        $comments = [];
+        $io->expects($this->exactly(2))
+            ->method('comment')
+            ->willReturnCallback(function ($line) use (&$comments) {
+                $comments[] = $line;
+            });
+
+        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv());
+
+        $this->assertStringContainsString('INCLUDED', $comments[0]);
+        $this->assertStringContainsString('PR #1', $comments[0]);
+        $this->assertStringContainsString('issue #10', $comments[0]);
+        $this->assertStringContainsString('excluded', $comments[1]);
+        $this->assertStringContainsString('PR #2', $comments[1]);
+    }
+
+    public function testGetPrsToDeliverDoesNotLogWhenNotVerbose(): void
+    {
+        $pr = $this->makePr(1, ['to-deliver:staging']);
+        $driver = $this->makeDriverThatSupports([$pr]);
+        $repoConfig = $this->createMock(ProjectRepoConfig::class);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(false);
+        $io->expects($this->never())->method('comment');
+
+        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv());
     }
 
     public function testUpdateLabelsSwapsToDeliverLabelForAlreadyDelivered(): void
@@ -86,7 +131,7 @@ class RemoteRepoTest extends TestCase
                 $capturedUpdates = $updates;
             });
 
-        (new RemoteRepo([$driver]))->updateLabels($repoConfig, [$pr], $this->makeEnv());
+        $this->makeRemoteRepo([$driver])->updateLabels($repoConfig, [$pr], $this->makeEnv());
 
         $this->assertCount(1, $capturedUpdates);
         /** @var IssueLabelsUpdate $update */
@@ -111,7 +156,7 @@ class RemoteRepoTest extends TestCase
             ->method('updateLabels')
             ->with($this->anything(), $this->isEmpty());
 
-        (new RemoteRepo([$driver]))->updateLabels($repoConfig, [$pr], $this->makeEnv());
+        $this->makeRemoteRepo([$driver])->updateLabels($repoConfig, [$pr], $this->makeEnv());
     }
 
     public function testSupportLabelsUpdateDelegatesToDriver(): void
@@ -121,7 +166,7 @@ class RemoteRepoTest extends TestCase
         $driver->method('supportLabelsUpdate')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = (new RemoteRepo([$driver]))->supportLabelsUpdate($repoConfig);
+        $result = $this->makeRemoteRepo([$driver])->supportLabelsUpdate($repoConfig);
 
         $this->assertTrue($result);
     }
@@ -134,6 +179,6 @@ class RemoteRepoTest extends TestCase
 
         $this->expectException(DriverNotFoundException::class);
 
-        (new RemoteRepo([$driver]))->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
     }
 }

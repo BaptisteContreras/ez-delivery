@@ -24,7 +24,7 @@ class RemoteRepoFactory
 
     public function createRemoteRepo(): RemoteRepo
     {
-        return $this->remoteRepo ??= new RemoteRepo($this->createRemoteRepoDrivers());
+        return $this->remoteRepo ??= new RemoteRepo($this->createRemoteRepoDrivers(), $this->io);
     }
 
     /**

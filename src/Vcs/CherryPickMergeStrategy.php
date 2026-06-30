@@ -29,6 +29,7 @@ class CherryPickMergeStrategy implements MergeStrategyInterface
 
             if ($cherryPickResult->isSuccess()) {
                 $this->io->success(sprintf('commit %s OK', $commit->getSha()));
+                $this->verbose($cherryPickResult->getOutput());
 
                 continue;
             }
@@ -36,13 +37,14 @@ class CherryPickMergeStrategy implements MergeStrategyInterface
             if (str_contains($cherryPickResult->getErrorOutput(), '--allow-empty')) {
                 $this->io->warning(sprintf('commit %s is already on the delivery branch', $commit->getSha()));
 
-                $this->gitDriver->skipCkerryPick($context);
+                $this->verbose($this->gitDriver->skipCkerryPick($context));
 
                 continue;
             }
 
             if (str_contains($cherryPickResult->getOutput(), 'CONFLICT')) {
                 $this->io->warning(sprintf('commit %s is in conflict', $commit->getSha()));
+                $this->verbose($cherryPickResult->getOutput());
                 $commit->markConflicted();
 
                 return MergeResult::conflict($commit);
@@ -61,6 +63,13 @@ class CherryPickMergeStrategy implements MergeStrategyInterface
 
     public function applyConflictResolution(Context $context): void
     {
-        $this->gitDriver->continueCkerryPick($context);
+        $this->verbose($this->gitDriver->continueCkerryPick($context));
+    }
+
+    private function verbose(string $output): void
+    {
+        if ($this->io->isVerbose() && '' !== $output) {
+            $this->io->comment($output);
+        }
     }
 }

@@ -20,30 +20,38 @@ class GitWorkspace
 
     public function isClear(): bool
     {
-        return str_contains($this->gitDriver->status($this->context), 'nothing to commit, working tree clean');
+        $status = $this->gitDriver->status($this->context);
+        $this->verbose('git status', $status);
+
+        return str_contains($status, 'nothing to commit, working tree clean');
     }
 
     public function hasChangesToBeCommited(): bool
     {
-        return str_contains($this->gitDriver->status($this->context), 'Changes to be committed');
+        $status = $this->gitDriver->status($this->context);
+        $this->verbose('git status', $status);
+
+        return str_contains($status, 'Changes to be committed');
     }
 
     public function getStatus(): string
     {
-        return $this->gitDriver->status($this->context);
+        $status = $this->gitDriver->status($this->context);
+        $this->verbose('git status', $status);
+
+        return $status;
     }
 
     public function updateAndCheckoutBranch(string $branchName): void
     {
-        $this->gitDriver
-            ->fetchAll($this->context)
-            ->checkout($this->context, $branchName, false)
-            ->pull($this->context, true);
+        $this->verbose('git fetch --all', $this->gitDriver->fetchAll($this->context));
+        $this->verbose('git checkout', $this->gitDriver->checkout($this->context, $branchName, false));
+        $this->verbose('git pull --rebase', $this->gitDriver->pull($this->context, true));
     }
 
     public function createAndCheckoutBranch(string $branchName): void
     {
-        $this->gitDriver->checkout($this->context, $branchName, true);
+        $this->verbose('git checkout -b', $this->gitDriver->checkout($this->context, $branchName, true));
     }
 
     /**
@@ -96,7 +104,7 @@ class GitWorkspace
             $gitMessage = $this->addPrInfo($pr, $gitMessage);
         }
 
-        $this->gitDriver->commit($this->context, $gitMessage, true);
+        $this->verbose('git commit', $this->gitDriver->commit($this->context, $gitMessage, true));
     }
 
     private function addPrInfo(Pr $pr, string $gitMessage): string
@@ -117,11 +125,24 @@ class GitWorkspace
 
     public function pushRelease(string $branchName): void
     {
+        if ($this->io->isVerbose()) {
+            $this->io->comment(sprintf('git push --set-upstream origin %s', $branchName));
+        }
+
         $this->gitDriver->push($this->context, $branchName);
     }
 
     public function applyConflictResolution(): void
     {
         $this->mergeStrategy->applyConflictResolution($this->context);
+    }
+
+    private function verbose(string $label, string $output): void
+    {
+        if (!$this->io->isVerbose()) {
+            return;
+        }
+
+        $this->io->comment('' === $output ? sprintf('%s (no output)', $label) : sprintf('%s: %s', $label, $output));
     }
 }
