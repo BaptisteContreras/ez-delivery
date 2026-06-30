@@ -1,4 +1,4 @@
-FROM 'php:8.3-fpm'
+FROM 'php:8.4-cli-trixie'
 
 
 RUN apt-get update && apt-get install -y git
@@ -28,3 +28,5 @@ ENV PATH="/app/vendor/bin:/root/.composer/vendor/bin:$PATH"
 ENV EZ_DELIVERY_CONFIG_PATH='/root/.ez'
 
 WORKDIR /app
+
+ENTRYPOINT ["tail", "-f", "/dev/null"]
