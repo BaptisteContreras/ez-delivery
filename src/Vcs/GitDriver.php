@@ -54,8 +54,23 @@ class GitDriver
 
     public function commit(Context $context, string $message, bool $allowEmpty): string
     {
-        $extraArgs = $allowEmpty ? '--allow-empty' : '';
+        return capture($this->buildCommitCommand($message, $allowEmpty), context: $context);
+    }
 
-        return capture(sprintf('git commit %s -m "%s"', $extraArgs, $message), context: $context);
+    /**
+     * Built as an argument array (not a shell string) so the message is passed to git
+     * as a single argument, regardless of characters like `"` it may contain.
+     *
+     * @return array<string>
+     */
+    private function buildCommitCommand(string $message, bool $allowEmpty): array
+    {
+        $command = ['git', 'commit', '-m', $message];
+
+        if ($allowEmpty) {
+            $command[] = '--allow-empty';
+        }
+
+        return $command;
     }
 }
