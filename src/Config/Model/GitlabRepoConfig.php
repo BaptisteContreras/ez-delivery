@@ -10,6 +10,7 @@ class GitlabRepoConfig extends ProjectRepoConfig
         private readonly string $namespace,
         string $name,
         string $apiToken,
+        private readonly PrSelectionMode $mode = PrSelectionMode::LinkedIssue,
     ) {
         parent::__construct($name, $apiToken, self::TYPE);
     }
@@ -17,5 +18,10 @@ class GitlabRepoConfig extends ProjectRepoConfig
     public function getNamespace(): string
     {
         return $this->namespace;
+    }
+
+    public function getMode(): PrSelectionMode
+    {
+        return $this->mode;
     }
 }

@@ -2,13 +2,20 @@
 
 namespace Ezdeliver\Tests\Repo;
 
+use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
+use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\PrReference;
 use Ezdeliver\Repo\DriverNotFoundException;
-use Ezdeliver\Repo\IssueLabelsUpdate;
+use Ezdeliver\Repo\GithubDriver;
+use Ezdeliver\Repo\GitlabLabelResolver;
+use Ezdeliver\Repo\GitlabLinkedIssueDriver;
+use Ezdeliver\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Repo\IssueReferenceStrategy;
+use Ezdeliver\Repo\LabelsUpdate;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
@@ -26,19 +33,18 @@ class RemoteRepoTest extends TestCase
         return new ProjectEnvConfig('staging', 'delivered:staging', 'to-deliver:staging');
     }
 
-    private function makePr(int $id, array $issueLabels): Pr
+    private function makePr(int $id, array $labels, ?PrReference $reference = null): Pr
     {
-        $issue = new Issue($id * 10, "Issue $id", $issueLabels);
         $commit = new Commit("sha$id", 'message', new \DateTimeImmutable());
 
-        return new Pr($id, "PR $id", $issue, [$commit]);
+        return new Pr($id, "PR $id", $labels, $reference, [$commit]);
     }
 
     private function makeDriverThatSupports(array $prs = []): RemoteRepoDriver
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
-        $driver->method('getPrsWithLinkedIssue')->willReturn($prs);
+        $driver->method('getPrs')->willReturn($prs);
 
         return $driver;
     }
@@ -97,7 +103,6 @@ class RemoteRepoTest extends TestCase
 
         $this->assertStringContainsString('INCLUDED', $comments[0]);
         $this->assertStringContainsString('PR #1', $comments[0]);
-        $this->assertStringContainsString('issue #10', $comments[0]);
         $this->assertStringContainsString('excluded', $comments[1]);
         $this->assertStringContainsString('PR #2', $comments[1]);
     }
@@ -115,14 +120,13 @@ class RemoteRepoTest extends TestCase
         $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv());
     }
 
-    public function testUpdateLabelsSwapsToDeliverLabelForAlreadyDelivered(): void
+    public function testUpdateLabelsSwapsToDeliverLabelForAlreadyDeliveredUsingReferenceWhenPresent(): void
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $issue = new Issue(10, 'Issue title', ['to-deliver:staging', 'bug']);
-        $pr = new Pr(1, 'PR title', $issue, []);
+        $pr = $this->makePr(1, ['to-deliver:staging', 'bug'], new PrReference(10, 'Issue title'));
 
         $capturedUpdates = null;
         $driver->expects($this->once())
@@ -134,23 +138,44 @@ class RemoteRepoTest extends TestCase
         $this->makeRemoteRepo([$driver])->updateLabels($repoConfig, [$pr], $this->makeEnv());
 
         $this->assertCount(1, $capturedUpdates);
-        /** @var IssueLabelsUpdate $update */
+        /** @var LabelsUpdate $update */
         $update = array_values($capturedUpdates)[0];
-        $this->assertSame(10, $update->getIssueId());
-        $this->assertSame('Issue title', $update->getIssueTitle());
+        $this->assertSame(10, $update->getTargetId());
+        $this->assertSame('Issue title', $update->getTargetTitle());
         $this->assertContains('delivered:staging', $update->getLabels());
         $this->assertNotContains('to-deliver:staging', $update->getLabels());
         $this->assertContains('bug', $update->getLabels());
     }
 
-    public function testUpdateLabelsSkipsIssuesWithoutToDeliverLabel(): void
+    public function testUpdateLabelsTargetsThePrItselfWhenNoReference(): void
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $issue = new Issue(10, 'Issue title', ['delivered:staging']);
-        $pr = new Pr(1, 'PR title', $issue, []);
+        $pr = $this->makePr(7, ['to-deliver:staging']);
+
+        $capturedUpdates = null;
+        $driver->expects($this->once())
+            ->method('updateLabels')
+            ->willReturnCallback(function ($config, array $updates) use (&$capturedUpdates) {
+                $capturedUpdates = $updates;
+            });
+
+        $this->makeRemoteRepo([$driver])->updateLabels($repoConfig, [$pr], $this->makeEnv());
+
+        $update = array_values($capturedUpdates)[0];
+        $this->assertSame(7, $update->getTargetId());
+        $this->assertSame('PR 7', $update->getTargetTitle());
+    }
+
+    public function testUpdateLabelsSkipsPrsWithoutToDeliverLabel(): void
+    {
+        $driver = $this->createMock(RemoteRepoDriver::class);
+        $driver->method('support')->willReturn(true);
+        $repoConfig = $this->createMock(ProjectRepoConfig::class);
+
+        $pr = $this->makePr(1, ['delivered:staging']);
 
         $driver->expects($this->once())
             ->method('updateLabels')
@@ -171,6 +196,39 @@ class RemoteRepoTest extends TestCase
         $this->assertTrue($result);
     }
 
+    public function testGetPrReferenceStrategyDelegatesToSelectedDriver(): void
+    {
+        $strategy = new IssueReferenceStrategy();
+
+        $driver = $this->createMock(RemoteRepoDriver::class);
+        $driver->method('support')->willReturn(true);
+        $driver->method('getPrReferenceStrategy')->willReturn($strategy);
+        $repoConfig = $this->createMock(ProjectRepoConfig::class);
+
+        $result = $this->makeRemoteRepo([$driver])->getPrReferenceStrategy($repoConfig);
+
+        $this->assertSame($strategy, $result);
+    }
+
+    public function testSelectDriverPicksTheDriverThatSupportsTheConfig(): void
+    {
+        $matchingPr = $this->makePr(1, ['to-deliver:staging']);
+
+        $unsupportingDriver = $this->createMock(RemoteRepoDriver::class);
+        $unsupportingDriver->method('support')->willReturn(false);
+        $unsupportingDriver->expects($this->never())->method('getPrs');
+
+        $supportingDriver = $this->createMock(RemoteRepoDriver::class);
+        $supportingDriver->method('support')->willReturn(true);
+        $supportingDriver->method('getPrs')->willReturn([$matchingPr]);
+
+        $repoConfig = $this->createMock(ProjectRepoConfig::class);
+
+        $result = $this->makeRemoteRepo([$unsupportingDriver, $supportingDriver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+
+        $this->assertContains($matchingPr, $result);
+    }
+
     public function testSelectDriverThrowsWhenNoDriverSupports(): void
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
@@ -180,5 +238,41 @@ class RemoteRepoTest extends TestCase
         $this->expectException(DriverNotFoundException::class);
 
         $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+    }
+
+    public function testRemoteRepoSelectsGitlabLinkedIssueDriverForLinkedIssueMode(): void
+    {
+        $io = $this->createMock(SymfonyStyle::class);
+        $labelResolver = new GitlabLabelResolver($io);
+
+        $drivers = [
+            new GithubDriver($io),
+            new GitlabLinkedIssueDriver($io, $labelResolver),
+            new GitlabMrLabelDriver($io, $labelResolver),
+        ];
+
+        $repoConfig = new GitlabRepoConfig('ns', 'repo', 'token', PrSelectionMode::LinkedIssue);
+
+        $strategy = $this->makeRemoteRepo($drivers)->getPrReferenceStrategy($repoConfig);
+
+        $this->assertTrue($strategy->supportsReference());
+    }
+
+    public function testRemoteRepoSelectsGitlabMrLabelDriverForMrLabelMode(): void
+    {
+        $io = $this->createMock(SymfonyStyle::class);
+        $labelResolver = new GitlabLabelResolver($io);
+
+        $drivers = [
+            new GithubDriver($io),
+            new GitlabLinkedIssueDriver($io, $labelResolver),
+            new GitlabMrLabelDriver($io, $labelResolver),
+        ];
+
+        $repoConfig = new GitlabRepoConfig('ns', 'repo', 'token', PrSelectionMode::MrLabel);
+
+        $strategy = $this->makeRemoteRepo($drivers)->getPrReferenceStrategy($repoConfig);
+
+        $this->assertFalse($strategy->supportsReference());
     }
 }

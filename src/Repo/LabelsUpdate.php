@@ -2,26 +2,26 @@
 
 namespace Ezdeliver\Repo;
 
-readonly class IssueLabelsUpdate
+readonly class LabelsUpdate
 {
     /**
      * @param array<string> $labels
      */
     public function __construct(
-        private int $issueId,
-        private string $issueTitle,
+        private int $targetId,
+        private string $targetTitle,
         private array $labels,
     ) {
     }
 
-    public function getIssueId(): int
+    public function getTargetId(): int
     {
-        return $this->issueId;
+        return $this->targetId;
     }
 
-    public function getIssueTitle(): string
+    public function getTargetTitle(): string
     {
-        return $this->issueTitle;
+        return $this->targetTitle;
     }
 
     public function getLabels(): array

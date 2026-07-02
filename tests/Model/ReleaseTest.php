@@ -3,7 +3,6 @@
 namespace Ezdeliver\Tests\Model;
 
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\Release;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,7 @@ class ReleaseTest extends TestCase
 
     private function makePr(int $id, array $commits): Pr
     {
-        return new Pr($id, "PR #$id", new Issue($id * 10, 'issue', []), $commits);
+        return new Pr($id, "PR #$id", [], null, $commits);
     }
 
     public function testGettersReturnConstructorValues(): void

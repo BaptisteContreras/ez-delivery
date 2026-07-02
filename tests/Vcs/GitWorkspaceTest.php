@@ -4,8 +4,10 @@ namespace Ezdeliver\Tests\Vcs;
 
 use Castor\Context;
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\PrReference;
+use Ezdeliver\Repo\IssueReferenceStrategy;
+use Ezdeliver\Repo\NullReferenceStrategy;
 use Ezdeliver\Vcs\GitDriver;
 use Ezdeliver\Vcs\GitWorkspace;
 use Ezdeliver\Vcs\MergeStrategyInterface;
@@ -30,9 +32,9 @@ class GitWorkspaceTest extends TestCase
         return new Commit($sha, 'message', new \DateTimeImmutable());
     }
 
-    private function makePr(int $id, array $commits = []): Pr
+    private function makePr(int $id, array $commits = [], ?PrReference $reference = null): Pr
     {
-        return new Pr($id, "PR #$id", new Issue($id * 10, 'issue', []), $commits);
+        return new Pr($id, "PR #$id", [], $reference, $commits);
     }
 
     public function testIsClearReturnsTrueWhenNothingToCommit(): void
@@ -147,6 +149,29 @@ class GitWorkspaceTest extends TestCase
     {
         $gitDriver = $this->createMock(GitDriver::class);
         $commit = $this->makeCommit('sha-abc');
+        $pr = $this->makePr(42, [$commit], new PrReference(10, 'Fix the bug'));
+
+        $capturedMessage = null;
+        $gitDriver->expects($this->once())
+            ->method('commit')
+            ->willReturnCallback(function ($context, string $message, bool $allowEmpty) use (&$capturedMessage) {
+                $capturedMessage = $message;
+
+                return '';
+            });
+
+        $this->makeWorkspace($gitDriver)->addGitReleaseInfo([$pr], new IssueReferenceStrategy());
+
+        $this->assertStringContainsString('#!42', $capturedMessage);
+        $this->assertStringContainsString('#10', $capturedMessage);
+        $this->assertStringContainsString('Fix the bug', $capturedMessage);
+        $this->assertStringContainsString('sha-abc', $capturedMessage);
+    }
+
+    public function testAddGitReleaseInfoOmitsIssueDetailsWhenReferenceNotSupported(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $commit = $this->makeCommit('sha-abc');
         $pr = $this->makePr(42, [$commit]);
 
         $capturedMessage = null;
@@ -158,10 +183,11 @@ class GitWorkspaceTest extends TestCase
                 return '';
             });
 
-        $this->makeWorkspace($gitDriver)->addGitReleaseInfo([$pr]);
+        $this->makeWorkspace($gitDriver)->addGitReleaseInfo([$pr], new NullReferenceStrategy());
 
         $this->assertStringContainsString('#!42', $capturedMessage);
         $this->assertStringContainsString('sha-abc', $capturedMessage);
+        $this->assertStringNotContainsString('Issue', $capturedMessage);
     }
 
     public function testIsClearLogsStatusOutputWhenVerbose(): void
@@ -247,7 +273,7 @@ class GitWorkspaceTest extends TestCase
 
         $pr = $this->makePr(1, [$this->makeCommit('sha-abc')]);
 
-        $this->makeWorkspace($gitDriver, io: $io)->addGitReleaseInfo([$pr]);
+        $this->makeWorkspace($gitDriver, io: $io)->addGitReleaseInfo([$pr], new NullReferenceStrategy());
     }
 
     public function testPushReleaseLogsCommandWhenVerbose(): void

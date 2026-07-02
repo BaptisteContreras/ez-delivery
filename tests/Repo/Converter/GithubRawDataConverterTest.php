@@ -98,9 +98,10 @@ class GithubRawDataConverterTest extends TestCase
 
         $this->assertSame(99, $pr->getId());
         $this->assertSame('Big PR', $pr->getTitle());
-        $this->assertSame(7, $pr->getClosingIssueId());
+        $this->assertSame(7, $pr->getReference()->getId());
+        $this->assertSame('GitHub issue', $pr->getReference()->getTitle());
         $this->assertCount(1, $pr->getCommits());
         $this->assertSame('sha1', $pr->getCommits()[0]->getSha());
-        $this->assertTrue($pr->hasClosingIssueWithLabel('to-deliver'));
+        $this->assertTrue($pr->hasLabel('to-deliver'));
     }
 }

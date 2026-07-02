@@ -10,6 +10,7 @@ use Ezdeliver\Factory\GitWorkspaceFactory;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\Release;
+use Ezdeliver\Repo\PrReferenceStrategy;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Vcs\GitWorkspace;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -84,8 +85,10 @@ class Packager
             return self::RETURN_CODE_OK;
         }
 
+        $referenceStrategy = $this->remoteRepo->getPrReferenceStrategy($projectConfig->getRepo());
+
         $this->io->title('About to deliver theses PRs');
-        $this->displayPrsToDeliver($prsToDeliver);
+        $this->displayPrsToDeliver($prsToDeliver, $referenceStrategy);
 
         if (!$this->interactionHandler->askToProceedRelease($selectedEnv)) {
             $this->io->error('Delivery aborted by user');
@@ -117,19 +120,32 @@ class Packager
     /**
      * @param array<Pr> $prsToDeliver
      */
-    private function displayPrsToDeliver(array $prsToDeliver): void
+    private function displayPrsToDeliver(array $prsToDeliver, PrReferenceStrategy $referenceStrategy): void
     {
-        $this->io->table(
-            ['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
-            array_map(fn (Pr $pr) => [
-                $pr->getId(),
-                $pr->getTitle(),
-                $pr->getClosingIssueId(),
-                $pr->getClosingIssueTitle(),
-                $pr->getCommitsCount()],
-                $prsToDeliver
-            )
-        );
+        $headers = ['PR #ID', 'PR title'];
+
+        if ($referenceStrategy->supportsReference()) {
+            $headers[] = 'issue #ID';
+            $headers[] = 'issue title';
+        }
+
+        $headers[] = 'Number of commit';
+
+        $rows = array_map(function (Pr $pr) use ($referenceStrategy) {
+            $row = [$pr->getId(), $pr->getTitle()];
+
+            if ($referenceStrategy->supportsReference()) {
+                $reference = $referenceStrategy->resolve($pr);
+                $row[] = $reference?->getId();
+                $row[] = $reference?->getTitle();
+            }
+
+            $row[] = $pr->getCommitsCount();
+
+            return $row;
+        }, $prsToDeliver);
+
+        $this->io->table($headers, $rows);
     }
 
     private function resume(
@@ -238,7 +254,9 @@ class Packager
         ProjectConfiguration $projectConfiguration,
         ProjectEnvConfig $selectedEnv,
     ): int {
-        $gitWorkspace->addGitReleaseInfo($prsDelivered);
+        $referenceStrategy = $this->remoteRepo->getPrReferenceStrategy($projectConfiguration->getRepo());
+
+        $gitWorkspace->addGitReleaseInfo($prsDelivered, $referenceStrategy);
 
         if ($this->interactionHandler->askToPushReleaseBranch($deliveryBranchName)) {
             $gitWorkspace->pushRelease($deliveryBranchName);

@@ -4,7 +4,6 @@ namespace Ezdeliver\Repo;
 
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -24,19 +23,18 @@ class RemoteRepo
      */
     public function getPrsToDeliver(ProjectRepoConfig $projectRepoConfig, ProjectEnvConfig $selectedEnv): array
     {
-        $prs = $this->selectDriver($projectRepoConfig)->getPrsWithLinkedIssue($projectRepoConfig);
+        $prs = $this->selectDriver($projectRepoConfig)->getPrs($projectRepoConfig);
 
         /** @var array<Pr> $prsToDeliver */
         $prsToDeliver = array_filter($prs, function (Pr $pr) use ($selectedEnv) {
-            $matches = $pr->hasClosingIssueWithLabel($selectedEnv->getToDeliverLabel()) || $pr->hasClosingIssueWithLabel($selectedEnv->getAlreadyDeliveredLabel());
+            $matches = $pr->hasLabel($selectedEnv->getToDeliverLabel()) || $pr->hasLabel($selectedEnv->getAlreadyDeliveredLabel());
 
             $this->verbose(sprintf(
-                'PR #%s (issue #%s "%s") %s: labels [%s] vs to-deliver "%s" / already-delivered "%s"',
+                'PR #%s "%s" %s: labels [%s] vs to-deliver "%s" / already-delivered "%s"',
                 $pr->getId(),
-                $pr->getClosingIssueId(),
-                $pr->getClosingIssueTitle(),
+                $pr->getTitle(),
                 $matches ? 'INCLUDED' : 'excluded',
-                implode(', ', $pr->getClosingIssue()->getLabels()),
+                implode(', ', $pr->getLabels()),
                 $selectedEnv->getToDeliverLabel(),
                 $selectedEnv->getAlreadyDeliveredLabel()
             ));
@@ -52,27 +50,32 @@ class RemoteRepo
         return $this->selectDriver($projectRepoConfig)->supportLabelsUpdate();
     }
 
+    public function getPrReferenceStrategy(ProjectRepoConfig $projectRepoConfig): PrReferenceStrategy
+    {
+        return $this->selectDriver($projectRepoConfig)->getPrReferenceStrategy();
+    }
+
     /**
      * @param array<Pr> $prsDelivered
      */
     public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $prsDelivered, ProjectEnvConfig $selectedEnv): void
     {
-        $issuesToUpdate = array_filter(
-            array_map(fn (Pr $pr) => $pr->getClosingIssue(), $prsDelivered),
-            fn (Issue $issue) => $issue->hasLabel($selectedEnv->getToDeliverLabel())
-        );
+        $prsToUpdate = array_filter($prsDelivered, fn (Pr $pr) => $pr->hasLabel($selectedEnv->getToDeliverLabel()));
 
-        $issueLabelUpdates = array_map(function (Issue $issue) use ($selectedEnv) {
-            $labels = $issue->getLabels();
-
-            $labels = array_filter($labels, fn ($label) => $label !== $selectedEnv->getToDeliverLabel());
-
+        $labelUpdates = array_map(function (Pr $pr) use ($selectedEnv) {
+            $labels = array_filter($pr->getLabels(), fn ($label) => $label !== $selectedEnv->getToDeliverLabel());
             $labels[] = $selectedEnv->getAlreadyDeliveredLabel();
 
-            return new IssueLabelsUpdate($issue->getId(), $issue->getTitle(), array_values(array_unique($labels)));
-        }, $issuesToUpdate);
+            $reference = $pr->getReference();
 
-        $this->selectDriver($projectRepoConfig)->updateLabels($projectRepoConfig, $issueLabelUpdates);
+            return new LabelsUpdate(
+                $reference?->getId() ?? $pr->getId(),
+                $reference?->getTitle() ?? $pr->getTitle(),
+                array_values(array_unique($labels))
+            );
+        }, $prsToUpdate);
+
+        $this->selectDriver($projectRepoConfig)->updateLabels($projectRepoConfig, $labelUpdates);
     }
 
     /**

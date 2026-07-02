@@ -5,17 +5,20 @@ namespace Ezdeliver\Repo\Converter;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\PrReference;
 
 final class GithubRawDataConverter
 {
     public static function buildPrFromRawData(array $rawData): Pr
     {
         $prData = $rawData['node'];
+        $issue = self::buildIssueFromRawData($prData['closingIssuesReferences']['edges'][0]['node']);
 
         return new Pr(
             $prData['number'],
             $prData['title'],
-            self::buildIssueFromRawData($prData['closingIssuesReferences']['edges'][0]['node']),
+            $issue->getLabels(),
+            new PrReference($issue->getId(), $issue->getTitle()),
             array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
         );
     }

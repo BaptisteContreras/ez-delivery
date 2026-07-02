@@ -5,12 +5,14 @@ namespace Ezdeliver\Model;
 final class Pr
 {
     /**
+     * @param array<string> $labels
      * @param array<Commit> $commits
      */
     public function __construct(
         private readonly int $id,
         private readonly string $title,
-        private readonly Issue $closingIssue,
+        private readonly array $labels,
+        private readonly ?PrReference $reference,
         private readonly array $commits,
         private bool $handled = false,
     ) {
@@ -26,29 +28,27 @@ final class Pr
         return $this->title;
     }
 
-    public function getClosingIssueId(): int
+    /**
+     * @return array<string>
+     */
+    public function getLabels(): array
     {
-        return $this->closingIssue->getId();
+        return $this->labels;
     }
 
-    public function getClosingIssueTitle(): string
+    public function hasLabel(string $label): bool
     {
-        return $this->closingIssue->getTitle();
+        return in_array($label, $this->labels, true);
     }
 
-    public function getClosingIssue(): Issue
+    public function getReference(): ?PrReference
     {
-        return $this->closingIssue;
+        return $this->reference;
     }
 
     public function getCommits(): array
     {
         return $this->commits;
-    }
-
-    public function hasClosingIssueWithLabel(string $label): bool
-    {
-        return $this->closingIssue->hasLabel($label);
     }
 
     public function getCommitsCount(): int
