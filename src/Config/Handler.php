@@ -23,6 +23,11 @@ class Handler
         return $projectConfig;
     }
 
+    public function peekProjectConfigVersion(string $project): int
+    {
+        return $this->storageHandler->peekConfigVersion($project);
+    }
+
     /**
      * @throws ProjectConfigNotFoundException
      */

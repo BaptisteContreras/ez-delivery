@@ -40,6 +40,22 @@ class Packager
 
     public function createPackage(string $project): int
     {
+        $configVersion = $this->configHandler->peekProjectConfigVersion($project);
+
+        if (ProjectConfiguration::CURRENT_VERSION !== $configVersion) {
+            $this->io->error($configVersion < ProjectConfiguration::CURRENT_VERSION
+                ? sprintf(
+                    'Project config is at version %d but this tool requires version %d. Run "migrate-config %s" to upgrade it.',
+                    $configVersion, ProjectConfiguration::CURRENT_VERSION, $project
+                )
+                : sprintf(
+                    'Project config is at version %d, which is newer than this tool supports (version %d). Please update ez-delivery.',
+                    $configVersion, ProjectConfiguration::CURRENT_VERSION
+                ));
+
+            return self::RETURN_CODE_ERROR;
+        }
+
         $projectConfig = $this->configHandler->loadProjectConfig($project);
         $selectedEnv = $this->interactionHandler->askToSelectEnv($projectConfig);
 

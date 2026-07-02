@@ -5,7 +5,7 @@ PHP := $(COMPOSE) run --rm --entrypoint php ezdeliver-php
 IMAGE := ghcr.io/baptistecontreras/ez-delivery
 
 .DEFAULT_GOAL := help
-.PHONY: help build up down shell install test cs-fix cs-check prod-build gh-login gh-logout gh-push gh-push-latest
+.PHONY: help build up down shell ez install test cs-fix cs-check prod-build gh-login gh-logout gh-push gh-push-latest
 
 help: ## Show this help
 	@echo "Available targets:"
@@ -21,7 +21,13 @@ down: ## Stop the dev stack
 	$(COMPOSE) down
 
 shell: ## Open a shell in the running dev container
-	$(COMPOSE) exec ezdeliver-php bash
+	$(COMPOSE) exec -it ezdeliver-php bash
+
+ez-root: ## Run dev
+	$(COMPOSE) exec -it --user 0 ezdeliver-php bash
+
+ez: ## Run dev
+	$(COMPOSE) exec -it --user "$$(id -u)" ezdeliver-php bash
 
 install: ## Run composer install
 	$(PHP) /usr/local/bin/composer install
