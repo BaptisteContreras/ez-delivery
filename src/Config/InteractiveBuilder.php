@@ -30,7 +30,8 @@ class InteractiveBuilder
                     [GithubRepoConfig::TYPE, GitlabRepoConfig::TYPE],
                     GitlabRepoConfig::TYPE)
             ),
-            envs: $this->getEnvs()
+            envs: $this->getEnvs(),
+            version: ProjectConfiguration::CURRENT_VERSION
         );
     }
 

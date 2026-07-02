@@ -52,6 +52,31 @@ class StorageHandler
         return $this->serializer->deserialize($rawData, ProjectConfiguration::class, self::STORAGE_FORMAT);
     }
 
+    public function peekConfigVersion(string $projectName): int
+    {
+        $rawData = json_decode(file_get_contents($this->getProjectConfigFilePath($projectName)), true);
+
+        return $rawData['version'] ?? ProjectConfiguration::INITIAL_VERSION;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function loadConfigAsArray(string $projectName): array
+    {
+        return json_decode(file_get_contents($this->getProjectConfigFilePath($projectName)), true);
+    }
+
+    public function backupConfig(string $projectName): void
+    {
+        $configPath = $this->getProjectConfigFilePath($projectName);
+        $backupPath = sprintf('%s.bak', $configPath);
+
+        $this->fs->copy($configPath, $backupPath, true);
+
+        $this->io->success(sprintf('Backed up config to %s', $backupPath));
+    }
+
     private function getProjectConfigFilePath(string $projectName): string
     {
         return sprintf('%s/%s.json', $this->configsDirPath, $projectName);

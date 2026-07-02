@@ -3,6 +3,7 @@
 use Castor\Attribute\AsContext;
 use Castor\Attribute\AsTask;
 use Castor\Context;
+use Ezdeliver\Factory\ConfigHandlerFactory;
 use Ezdeliver\Factory\PackagerFactory;
 
 const DEFAULT_CONFIG_PATH = '~/.ez-delivery';
@@ -28,4 +29,12 @@ function package(string $project): void
     exit(PackagerFactory::initFromCastorGlobalContext()
         ->createPackager()
         ->createPackage($project));
+}
+
+#[AsTask(description: 'Upgrade a project config to the latest version')]
+function migrateConfig(string $project): void
+{
+    exit(ConfigHandlerFactory::initFromCastorGlobalContext()
+        ->createMigrator()
+        ->migrateProjectConfig($project));
 }
