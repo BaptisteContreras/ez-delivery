@@ -3,17 +3,12 @@
 namespace Ezdeliver\Tests\Model;
 
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\PrReference;
 use PHPUnit\Framework\TestCase;
 
 class PrTest extends TestCase
 {
-    private function makeIssue(array $labels = []): Issue
-    {
-        return new Issue(10, 'issue title', $labels);
-    }
-
     private function makeCommit(string $sha = 'sha1'): Commit
     {
         return new Commit($sha, 'message', new \DateTimeImmutable());
@@ -21,21 +16,27 @@ class PrTest extends TestCase
 
     public function testGettersReturnConstructorValues(): void
     {
-        $issue = $this->makeIssue(['bug']);
+        $reference = new PrReference(10, 'issue title');
         $commits = [$this->makeCommit('sha1'), $this->makeCommit('sha2')];
-        $pr = new Pr(5, 'Fix bug', $issue, $commits);
+        $pr = new Pr(5, 'Fix bug', ['bug'], $reference, $commits);
 
         $this->assertSame(5, $pr->getId());
         $this->assertSame('Fix bug', $pr->getTitle());
-        $this->assertSame(10, $pr->getClosingIssueId());
-        $this->assertSame('issue title', $pr->getClosingIssueTitle());
-        $this->assertSame($issue, $pr->getClosingIssue());
+        $this->assertSame(['bug'], $pr->getLabels());
+        $this->assertSame($reference, $pr->getReference());
         $this->assertSame($commits, $pr->getCommits());
+    }
+
+    public function testGetReferenceReturnsNullWhenNoneGiven(): void
+    {
+        $pr = new Pr(1, 'title', [], null, []);
+
+        $this->assertNull($pr->getReference());
     }
 
     public function testGetCommitsCountReturnsNumberOfCommits(): void
     {
-        $pr = new Pr(1, 'title', $this->makeIssue(), [
+        $pr = new Pr(1, 'title', [], null, [
             $this->makeCommit('sha1'),
             $this->makeCommit('sha2'),
             $this->makeCommit('sha3'),
@@ -46,30 +47,30 @@ class PrTest extends TestCase
 
     public function testIsHandledStartsFalse(): void
     {
-        $pr = new Pr(1, 'title', $this->makeIssue(), []);
+        $pr = new Pr(1, 'title', [], null, []);
 
         $this->assertFalse($pr->isHandled());
     }
 
     public function testMarkHandledSetsTrue(): void
     {
-        $pr = new Pr(1, 'title', $this->makeIssue(), []);
+        $pr = new Pr(1, 'title', [], null, []);
         $pr->markHandled();
 
         $this->assertTrue($pr->isHandled());
     }
 
-    public function testHasClosingIssueWithLabelReturnsTrueWhenPresent(): void
+    public function testHasLabelReturnsTrueWhenPresent(): void
     {
-        $pr = new Pr(1, 'title', $this->makeIssue(['to-deliver']), []);
+        $pr = new Pr(1, 'title', ['to-deliver'], null, []);
 
-        $this->assertTrue($pr->hasClosingIssueWithLabel('to-deliver'));
+        $this->assertTrue($pr->hasLabel('to-deliver'));
     }
 
-    public function testHasClosingIssueWithLabelReturnsFalseWhenAbsent(): void
+    public function testHasLabelReturnsFalseWhenAbsent(): void
     {
-        $pr = new Pr(1, 'title', $this->makeIssue(['bug']), []);
+        $pr = new Pr(1, 'title', ['bug'], null, []);
 
-        $this->assertFalse($pr->hasClosingIssueWithLabel('to-deliver'));
+        $this->assertFalse($pr->hasLabel('to-deliver'));
     }
 }

@@ -24,7 +24,7 @@ class GithubDriver implements RemoteRepoDriver
     /**
      * @param GithubRepoConfig $projectRepoConfig
      */
-    public function getPrsWithLinkedIssue(ProjectRepoConfig $projectRepoConfig): array
+    public function getPrs(ProjectRepoConfig $projectRepoConfig): array
     {
         $this->io->title('Getting data from Github');
 
@@ -61,9 +61,14 @@ class GithubDriver implements RemoteRepoDriver
         return false;
     }
 
-    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $labelsUpdates): void
     {
         throw new \Exception('Not implemented');
+    }
+
+    public function getPrReferenceStrategy(): PrReferenceStrategy
+    {
+        return new IssueReferenceStrategy();
     }
 
     private function verbose(string $line): void

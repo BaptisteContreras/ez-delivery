@@ -12,12 +12,14 @@ interface RemoteRepoDriver
     public function supportLabelsUpdate(): bool;
 
     /**
-     * @param array<IssueLabelsUpdate> $issuesLabelsUpdates
+     * @param array<LabelsUpdate> $labelsUpdates
      */
-    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void;
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $labelsUpdates): void;
 
     /**
      * @return array<Pr>
      */
-    public function getPrsWithLinkedIssue(ProjectRepoConfig $projectRepoConfig): array;
+    public function getPrs(ProjectRepoConfig $projectRepoConfig): array;
+
+    public function getPrReferenceStrategy(): PrReferenceStrategy;
 }

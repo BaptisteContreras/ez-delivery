@@ -62,7 +62,39 @@ class GitlabRawDataConverterTest extends TestCase
 
         $this->assertSame(5, $pr->getId());
         $this->assertSame('Add feature', $pr->getTitle());
-        $this->assertSame($issue, $pr->getClosingIssue());
+        $this->assertSame([], $pr->getLabels());
+        $this->assertSame(10, $pr->getReference()->getId());
+        $this->assertSame('issue', $pr->getReference()->getTitle());
+        $this->assertCount(2, $pr->getCommits());
+        $this->assertSame('sha-oldest', $pr->getCommits()[0]->getSha());
+        $this->assertSame('sha-newest', $pr->getCommits()[1]->getSha());
+    }
+
+    public function testBuildPrFromRawDataWithOwnLabelsUsesMrLabelsAndNoReference(): void
+    {
+        $raw = [
+            'iid' => 5,
+            'title' => 'Add feature',
+            'labels' => [
+                'nodes' => [
+                    ['title' => 'to-deliver:staging'],
+                    ['title' => 'bug'],
+                ],
+            ],
+            'commits' => [
+                'nodes' => [
+                    ['sha' => 'sha-newest', 'message' => 'second commit', 'committedDate' => '2024-03-15 12:00:00'],
+                    ['sha' => 'sha-oldest', 'message' => 'first commit',  'committedDate' => '2024-03-14 12:00:00'],
+                ],
+            ],
+        ];
+
+        $pr = GitlabRawDataConverter::buildPrFromRawDataWithOwnLabels($raw);
+
+        $this->assertSame(5, $pr->getId());
+        $this->assertSame('Add feature', $pr->getTitle());
+        $this->assertSame(['to-deliver:staging', 'bug'], $pr->getLabels());
+        $this->assertNull($pr->getReference());
         $this->assertCount(2, $pr->getCommits());
         $this->assertSame('sha-oldest', $pr->getCommits()[0]->getSha());
         $this->assertSame('sha-newest', $pr->getCommits()[1]->getSha());

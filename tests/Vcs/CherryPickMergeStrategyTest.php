@@ -4,7 +4,6 @@ namespace Ezdeliver\Tests\Vcs;
 
 use Castor\Context;
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\CherryPickMergeStrategy;
 use Ezdeliver\Vcs\GitDriver;
@@ -26,7 +25,7 @@ class CherryPickMergeStrategyTest extends TestCase
 
     private function makePr(array $commits): Pr
     {
-        return new Pr(1, 'PR title', new Issue(10, 'issue', []), $commits);
+        return new Pr(1, 'PR title', [], null, $commits);
     }
 
     private function makeStrategy(): array

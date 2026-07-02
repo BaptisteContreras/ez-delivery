@@ -3,7 +3,6 @@
 namespace Ezdeliver\Tests\Vcs\Result;
 
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\Result\GlobalMergeResult;
 use Ezdeliver\Vcs\Result\MergeResult;
@@ -13,7 +12,7 @@ class GlobalMergeResultTest extends TestCase
 {
     private function makePr(): Pr
     {
-        return new Pr(1, 'PR title', new Issue(10, 'issue', []), []);
+        return new Pr(1, 'PR title', [], null, []);
     }
 
     private function makeCommit(): Commit

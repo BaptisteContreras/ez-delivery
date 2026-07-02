@@ -5,6 +5,7 @@ namespace Ezdeliver\Vcs;
 use Castor\Context;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Repo\PrReferenceStrategy;
 use Ezdeliver\Vcs\Result\GlobalMergeResult;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -92,31 +93,46 @@ class GitWorkspace
     /**
      * @param array<Pr> $prsDelivered
      */
-    public function addGitReleaseInfo(array $prsDelivered): void
+    public function addGitReleaseInfo(array $prsDelivered, PrReferenceStrategy $referenceStrategy): void
     {
         $this->io->info('write release info in current branch');
 
         $gitMessage = sprintf('AUTO RELEASE %s', PHP_EOL);
         $gitMessage .= sprintf('Number of PRs delivered : %s %s', count($prsDelivered), PHP_EOL);
-        $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
+        $gitMessage .= $referenceStrategy->supportsReference()
+            ? sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL)
+            : sprintf('PR #ID, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
 
         foreach ($prsDelivered as $pr) {
-            $gitMessage = $this->addPrInfo($pr, $gitMessage);
+            $gitMessage = $this->addPrInfo($pr, $gitMessage, $referenceStrategy);
         }
 
         $this->verbose('git commit', $this->gitDriver->commit($this->context, $gitMessage, true));
     }
 
-    private function addPrInfo(Pr $pr, string $gitMessage): string
+    private function addPrInfo(Pr $pr, string $gitMessage, PrReferenceStrategy $referenceStrategy): string
     {
         $commits = implode(';', array_map(fn (Commit $commit) => sprintf('"%s"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
+
+        if (!$referenceStrategy->supportsReference()) {
+            return sprintf(
+                '%s-   #!%s, %s, [%s] %s',
+                $gitMessage,
+                $pr->getId(),
+                $pr->getCommitsCount(),
+                $commits,
+                PHP_EOL
+            );
+        }
+
+        $reference = $referenceStrategy->resolve($pr);
 
         return sprintf(
             '%s-   #!%s, #%s, "%s", %s, [%s] %s',
             $gitMessage,
             $pr->getId(),
-            $pr->getClosingIssueId(),
-            $pr->getClosingIssueTitle(),
+            $reference?->getId(),
+            $reference?->getTitle(),
             $pr->getCommitsCount(),
             $commits,
             PHP_EOL

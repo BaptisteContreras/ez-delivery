@@ -7,6 +7,7 @@ use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectConfiguration;
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
+use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Const\Interactive;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -68,6 +69,7 @@ class InteractiveBuilder
                 namespace: $this->getRequiredValue('Repository namepsace'),
                 name: $this->getRequiredValue('Repository name'),
                 apiToken: $this->getRequiredValue('Gitlab token'),
+                mode: $this->getPrSelectionMode(),
             ),
             GithubRepoConfig::TYPE => new GithubRepoConfig(
                 owner: $this->getRequiredValue('Repository owner'),
@@ -75,6 +77,17 @@ class InteractiveBuilder
                 apiToken: $this->getRequiredValue('Github personal token'),
             ),
         };
+    }
+
+    private function getPrSelectionMode(): PrSelectionMode
+    {
+        $choice = $this->io->choice(
+            'How should merge requests be selected for delivery ? ',
+            [PrSelectionMode::LinkedIssue->value, PrSelectionMode::MrLabel->value],
+            PrSelectionMode::LinkedIssue->value
+        );
+
+        return PrSelectionMode::from($choice);
     }
 
     /**
