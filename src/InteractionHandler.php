@@ -64,4 +64,13 @@ class InteractionHandler
     {
         return self::YES === $this->io->choice('Update labels ?', [self::YES, self::NO], self::YES);
     }
+
+    public function askToCreateEmptyReleaseBranch(): bool
+    {
+        return self::YES === $this->io->choice(
+            'No PR to deliver. Create an empty release branch anyway ?',
+            [self::YES, self::NO],
+            self::NO
+        );
+    }
 }

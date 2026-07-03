@@ -97,6 +97,10 @@ class Packager
         if (empty($prsToDeliver)) {
             $this->io->warning(sprintf('No PR found for env %s', $selectedEnv->getName()));
 
+            if ($this->interactionHandler->askToCreateEmptyReleaseBranch()) {
+                return $this->createEmptyReleaseBranch($projectConfig, $selectedEnv, $gitWorkspace);
+            }
+
             return self::RETURN_CODE_OK;
         }
 
@@ -128,6 +132,31 @@ class Packager
             $gitWorkspace,
             $deliveryBranchName
         );
+    }
+
+    private function createEmptyReleaseBranch(
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+        GitWorkspace $gitWorkspace,
+    ): int {
+        $sourceBranchName = $this->interactionHandler->askBaseBranch($projectConfiguration);
+        $newBranchName = $this->interactionHandler->askDeliveryBranchName($selectedEnv);
+
+        $this->io->info(sprintf('updating %s', $sourceBranchName));
+        $gitWorkspace->updateAndCheckoutBranch($sourceBranchName);
+        $this->io->success(sprintf('%s is up to date', $sourceBranchName));
+
+        $this->io->info(sprintf('creating empty release branch %s from %s', $newBranchName, $sourceBranchName));
+        $gitWorkspace->createAndCheckoutBranch($newBranchName);
+        $this->io->success(sprintf('%s is created', $newBranchName));
+
+        if ($this->interactionHandler->askToPushReleaseBranch($newBranchName)) {
+            $gitWorkspace->pushRelease($newBranchName);
+
+            $this->io->success('branch pushed');
+        }
+
+        return self::RETURN_CODE_OK;
     }
 
     /**
