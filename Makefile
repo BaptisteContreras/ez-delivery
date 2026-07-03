@@ -5,7 +5,7 @@ PHP := $(COMPOSE) run --rm --entrypoint php ezdeliver-php
 IMAGE := ghcr.io/baptistecontreras/ez-delivery
 
 .DEFAULT_GOAL := help
-.PHONY: help build up down shell ez install test cs-fix cs-check phpstan phpstan-baseline prod-build gh-login gh-logout gh-push gh-push-latest
+.PHONY: help build up down shell ez install audit test cs-fix cs-check phpstan phpstan-baseline prod-build gh-login gh-logout gh-push gh-push-latest
 
 help: ## Show this help
 	@echo "Available targets:"
@@ -31,6 +31,9 @@ ez: ## Run dev
 
 install: ## Run composer install
 	$(PHP) /usr/local/bin/composer install
+
+audit: ## Check installed dependencies for known security vulnerabilities
+	$(PHP) /usr/local/bin/composer audit
 
 test: ## Run the PHPUnit test suite
 	$(PHP) /app/vendor/bin/phpunit
