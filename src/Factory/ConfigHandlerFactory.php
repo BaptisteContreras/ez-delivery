@@ -39,7 +39,7 @@ class ConfigHandlerFactory
             io(),
             fs(),
             (new SfFactory())->createSfSerializer(),
-            $context->environment[CONFIG_PATH_ENV_VAR]
+            (string) $context->environment[CONFIG_PATH_ENV_VAR]
         );
     }
 

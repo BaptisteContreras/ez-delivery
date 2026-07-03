@@ -71,7 +71,7 @@ class PackagerFactory
 
     private function getConfigsDirPathFromContext(): string
     {
-        return $this->context->environment[CONFIG_PATH_ENV_VAR];
+        return (string) $this->context->environment[CONFIG_PATH_ENV_VAR];
     }
 
     private function createPackageStorageHandler(): PackageStorageHandler

@@ -54,7 +54,7 @@ class StorageHandler
 
     public function peekConfigVersion(string $projectName): int
     {
-        $rawData = json_decode(file_get_contents($this->getProjectConfigFilePath($projectName)), true);
+        $rawData = json_decode($this->readConfigFile($this->getProjectConfigFilePath($projectName)), true);
 
         return $rawData['version'] ?? ProjectConfiguration::INITIAL_VERSION;
     }
@@ -64,7 +64,7 @@ class StorageHandler
      */
     public function loadConfigAsArray(string $projectName): array
     {
-        return json_decode(file_get_contents($this->getProjectConfigFilePath($projectName)), true);
+        return json_decode($this->readConfigFile($this->getProjectConfigFilePath($projectName)), true);
     }
 
     public function backupConfig(string $projectName): void
@@ -80,5 +80,16 @@ class StorageHandler
     private function getProjectConfigFilePath(string $projectName): string
     {
         return sprintf('%s/%s.json', $this->configsDirPath, $projectName);
+    }
+
+    private function readConfigFile(string $filePath): string
+    {
+        $content = file_get_contents($filePath);
+
+        if (false === $content) {
+            throw new \RuntimeException(sprintf('Unable to read config file %s', $filePath));
+        }
+
+        return $content;
     }
 }

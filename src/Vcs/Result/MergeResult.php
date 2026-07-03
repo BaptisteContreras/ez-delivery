@@ -34,7 +34,7 @@ final readonly class MergeResult
 
     public function getConflictingCommit(): Commit
     {
-        if (!$this->isConflicting()) {
+        if (!$this->isConflicting() || null === $this->conflictingCommit) {
             throw new \LogicException('Should not be called on non conflicting result');
         }
 

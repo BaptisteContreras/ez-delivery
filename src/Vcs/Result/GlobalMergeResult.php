@@ -31,7 +31,7 @@ final readonly class GlobalMergeResult
 
     public function getProblematicMergeResult(): MergeResult
     {
-        if (!$this->isConflicting()) {
+        if (!$this->isConflicting() || null === $this->problematicMergeResult) {
             throw new \LogicException('Should not be called on non problematic result');
         }
 

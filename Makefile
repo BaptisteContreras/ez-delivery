@@ -5,7 +5,7 @@ PHP := $(COMPOSE) run --rm --entrypoint php ezdeliver-php
 IMAGE := ghcr.io/baptistecontreras/ez-delivery
 
 .DEFAULT_GOAL := help
-.PHONY: help build up down shell ez install test cs-fix cs-check prod-build gh-login gh-logout gh-push gh-push-latest
+.PHONY: help build up down shell ez install test cs-fix cs-check phpstan phpstan-baseline prod-build gh-login gh-logout gh-push gh-push-latest
 
 help: ## Show this help
 	@echo "Available targets:"
@@ -40,6 +40,12 @@ cs-fix: ## Run PHP CS Fixer and apply fixes
 
 cs-check: ## Run PHP CS Fixer in dry-run mode
 	$(PHP) /app/vendor/bin/php-cs-fixer fix --dry-run --diff
+
+phpstan: ## Run PHPStan static analysis
+	$(PHP) /app/vendor/bin/phpstan analyse
+
+phpstan-baseline: ## Regenerate the PHPStan baseline for currently-ignored errors
+	$(PHP) /app/vendor/bin/phpstan analyse --generate-baseline
 
 prod-build: ## Build the prod image, tagged with a version (prompts if VERSION is not set)
 	@if [ -z "$(VERSION)" ]; then \

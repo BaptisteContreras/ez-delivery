@@ -41,6 +41,9 @@ final class Pr
         return $this->closingIssue;
     }
 
+    /**
+     * @return array<Commit>
+     */
     public function getCommits(): array
     {
         return $this->commits;

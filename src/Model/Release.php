@@ -58,12 +58,24 @@ readonly class Release
     #[Ignore]
     public function getConflictingPr(): Pr
     {
-        return current(array_filter($this->prs, fn (Pr $pr) => $pr->getId() === $this->currentPrId));
+        $conflictingPr = current(array_filter($this->prs, fn (Pr $pr) => $pr->getId() === $this->currentPrId));
+
+        if (false === $conflictingPr) {
+            throw new \LogicException('No conflicting PR found for the current release');
+        }
+
+        return $conflictingPr;
     }
 
     #[Ignore]
     public function getConflictingCommit(): Commit
     {
-        return current(array_filter($this->getConflictingPr()->getCommits(), fn (Commit $commit) => $commit->getSha() === $this->currentCommitSha));
+        $conflictingCommit = current(array_filter($this->getConflictingPr()->getCommits(), fn (Commit $commit) => $commit->getSha() === $this->currentCommitSha));
+
+        if (false === $conflictingCommit) {
+            throw new \LogicException('No conflicting commit found for the current release');
+        }
+
+        return $conflictingCommit;
     }
 }

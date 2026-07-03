@@ -24,6 +24,9 @@ final readonly class Issue
         return $this->title;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getLabels(): array
     {
         return $this->labels;

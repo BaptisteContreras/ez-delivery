@@ -24,6 +24,9 @@ readonly class IssueLabelsUpdate
         return $this->issueTitle;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getLabels(): array
     {
         return $this->labels;

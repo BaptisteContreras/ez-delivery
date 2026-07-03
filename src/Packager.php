@@ -250,19 +250,31 @@ class Packager
         }
 
         if ($prsMergeResult->isOnError()) {
+            $problematicPr = $prsMergeResult->getProblematicPr();
+
+            if (null === $problematicPr) {
+                throw new \LogicException('Expected a problematic PR on merge error');
+            }
+
             $this->io->error(sprintf(
                 'Stop due to git error on pr #%s : %s',
-                $prsMergeResult->getProblematicPr()->getId(),
-                $prsMergeResult->getProblematicPr()->getTitle()
+                $problematicPr->getId(),
+                $problematicPr->getTitle()
             ));
 
             return self::RETURN_CODE_ERROR;
         }
 
         if ($prsMergeResult->isConflicting()) {
+            $problematicPr = $prsMergeResult->getProblematicPr();
+
+            if (null === $problematicPr) {
+                throw new \LogicException('Expected a problematic PR on merge conflict');
+            }
+
             return $this->handleMergeConflict(
                 $prsToDeliver,
-                $prsMergeResult->getProblematicPr(),
+                $problematicPr,
                 $prsMergeResult->getConflictingCommit(),
                 $projectConfiguration,
                 $selectedEnv,
@@ -301,6 +313,9 @@ class Packager
         return self::RETURN_CODE_OK;
     }
 
+    /**
+     * @param array<Pr> $prsToDeliver
+     */
     private function handleMergeConflict(
         array $prsToDeliver,
         Pr $problematicPr,
