@@ -76,8 +76,8 @@ This asks, interactively:
 - The **repo type** (GitHub or GitLab), then the credentials for it: owner
   (GitHub) or namespace (GitLab), repository name, and an API token.
 - One or more **environments**, each with a name and its pair of labels:
-  the "to deliver" label (marks an issue as ready for this environment) and
-  the "already delivered" label (what it gets swapped to once delivered).
+  the "already delivered" label (what an issue gets swapped to once delivered) and
+  the "to deliver" label (marks an issue as ready for this environment).
   You can add as many environments as you need.
 
 The resulting config is stored under `~/.ez-delivery` (or wherever
@@ -99,7 +99,7 @@ This:
    release branch anyway instead of just stopping — useful for cutting a
    release branch ahead of time even when there's nothing to deliver yet.
 3. Once you confirm, asks for the **delivery branch name** (defaulting to
-   `<environment>-<date>`) and which **base branch** to branch from, then
+   `<environment>-<timestamp>`) and which **base branch** to branch from, then
    updates the base branch and creates the delivery branch from it.
 4. **Cherry-picks each pull request's commits** onto the delivery branch.
    If a cherry-pick conflicts, the command pauses — resolve the conflict in
@@ -107,7 +107,7 @@ This:
    command to resume from where it left off.
 5. Once every PR is merged, optionally **pushes** the delivery branch and
    **updates labels** on the source issues (swapping "to deliver" for
-   "already delivered") — both are separate yes/no prompts, so you can
+   "already delivered"; currently GitLab-only) — both are separate yes/no prompts, so you can
    review the branch locally before either happens.
 
 ## Upgrading a project config
