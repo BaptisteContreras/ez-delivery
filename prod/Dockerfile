@@ -35,26 +35,23 @@ RUN composer install -o --prefer-dist --no-cache
 
 RUN vendor/bin/castor repack --app-name ez-delivery
 
-FROM base as prod
+FROM php:8.4-cli-alpine as prod
 LABEL org.opencontainers.image.source="https://github.com/BaptisteContreras/ez-delivery"
+
+RUN apk add --no-cache git openssh-client ca-certificates shadow su-exec
 
 WORKDIR /app
 
 COPY --from=builder /app/ez-delivery.linux.phar /app/ez-delivery.linux.phar
 
-RUN mv /app/ez-delivery.linux.phar /usr/local/bin/ez-delivery && chmod +x  /usr/local/bin/ez-delivery
+RUN mv /app/ez-delivery.linux.phar /usr/local/bin/ez-delivery && chmod +x /usr/local/bin/ez-delivery
 
-ENV HOME=/ez/home
+ENV HOME=/home/ez-delivery
 ENV EZ_DELIVERY_CONFIG_PATH='/home/ez-delivery/.ez'
 
-
-RUN useradd -u 3000  -s /bin/bash -m ez-delivery
-
-RUN echo "alias gst='git status'" >> /home/ez-delivery/.bashrc
-RUN echo "alias ga='git add .'" >> /home/ez-delivery/.bashrc
+RUN useradd -u 3000 -s /bin/sh -m ez-delivery
 
 COPY prod/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-
