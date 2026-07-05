@@ -149,7 +149,7 @@ class GitWorkspaceTest extends TestCase
     {
         $gitDriver = $this->createMock(GitDriver::class);
         $commit = $this->makeCommit('sha-abc');
-        $pr = $this->makePr(42, [$commit], new PrReference(10, 'Fix the bug'));
+        $pr = $this->makePr(42, [$commit], new PrReference(10, 'Fix the bug', []));
 
         $capturedMessage = null;
         $gitDriver->expects($this->once())

@@ -18,7 +18,7 @@ final class GithubRawDataConverter
             $prData['number'],
             $prData['title'],
             $issue->getLabels(),
-            new PrReference($issue->getId(), $issue->getTitle()),
+            new PrReference($issue->getId(), $issue->getTitle(), $issue->getLabels()),
             array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
         );
     }

@@ -16,7 +16,7 @@ class PrTest extends TestCase
 
     public function testGettersReturnConstructorValues(): void
     {
-        $reference = new PrReference(10, 'issue title');
+        $reference = new PrReference(10, 'issue title', []);
         $commits = [$this->makeCommit('sha1'), $this->makeCommit('sha2')];
         $pr = new Pr(5, 'Fix bug', ['bug'], $reference, $commits);
 

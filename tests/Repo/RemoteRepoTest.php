@@ -126,7 +126,7 @@ class RemoteRepoTest extends TestCase
         $driver->method('support')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $pr = $this->makePr(1, ['to-deliver:staging', 'bug'], new PrReference(10, 'Issue title'));
+        $pr = $this->makePr(1, ['to-deliver:staging', 'bug'], new PrReference(10, 'Issue title', []));
 
         $capturedUpdates = null;
         $driver->expects($this->once())

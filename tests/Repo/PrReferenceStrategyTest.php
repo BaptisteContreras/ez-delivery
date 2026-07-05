@@ -22,7 +22,7 @@ class PrReferenceStrategyTest extends TestCase
 
     public function testIssueReferenceStrategyResolveReturnsPrReference(): void
     {
-        $reference = new PrReference(10, 'issue title');
+        $reference = new PrReference(10, 'issue title', []);
         $pr = $this->makePr($reference);
 
         $this->assertSame($reference, (new IssueReferenceStrategy())->resolve($pr));
@@ -42,7 +42,7 @@ class PrReferenceStrategyTest extends TestCase
 
     public function testNullReferenceStrategyResolveAlwaysReturnsNull(): void
     {
-        $pr = $this->makePr(new PrReference(10, 'issue title'));
+        $pr = $this->makePr(new PrReference(10, 'issue title', []));
 
         $this->assertNull((new NullReferenceStrategy())->resolve($pr));
     }
