@@ -164,6 +164,49 @@ class GitWorkspaceTest extends TestCase
         $this->assertStringContainsString('sha-abc', $capturedMessage);
     }
 
+    public function testAddGitReleaseInfoWrapsTitleAndShaInPlainQuotesWithoutBackslashes(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $commit = $this->makeCommit('sha-abc');
+        $pr = new Pr(42, 'PR #42', new Issue(10, 'Fix the bug', []), [$commit]);
+
+        $capturedMessage = null;
+        $gitDriver->expects($this->once())
+            ->method('commit')
+            ->willReturnCallback(function ($context, string $message, bool $allowEmpty) use (&$capturedMessage) {
+                $capturedMessage = $message;
+
+                return '';
+            });
+
+        $this->makeWorkspace($gitDriver)->addGitReleaseInfo([$pr]);
+
+        $this->assertStringContainsString('"Fix the bug"', $capturedMessage);
+        $this->assertStringContainsString('"sha-abc"', $capturedMessage);
+        $this->assertStringNotContainsString('\\"', $capturedMessage);
+    }
+
+    public function testReleaseMessageWithQuotedIssueTitleStillReachesGitAsASingleSafeArgument(): void
+    {
+        // Regression check: this fix makes addPrInfo() embed a literal, unescaped `"` in the
+        // release message around titles/SHAs. That is only safe because GitDriver::commit()
+        // builds the git command as an argument array rather than a shell string - confirm that
+        // chain still holds even when the issue title itself legitimately contains a `"`,
+        // i.e. that the older double-quote-in-title fix (GitDriverTest) wasn't undone by this one.
+        $pr = new Pr(1, 'PR #1', new Issue(10, 'Fix the "login" bug', []), [$this->makeCommit('sha-abc')]);
+
+        $addPrInfo = new \ReflectionMethod(GitWorkspace::class, 'addPrInfo');
+        $addPrInfo->setAccessible(true);
+        $message = $addPrInfo->invoke($this->makeWorkspace(), $pr, '');
+
+        $buildCommitCommand = new \ReflectionMethod(GitDriver::class, 'buildCommitCommand');
+        $buildCommitCommand->setAccessible(true);
+        $command = $buildCommitCommand->invoke(new GitDriver(), $message, true);
+
+        $this->assertStringContainsString('"Fix the "login" bug"', $message);
+        $this->assertSame(['git', 'commit', '-m', $message, '--allow-empty'], $command);
+    }
+
     public function testIsClearLogsStatusOutputWhenVerbose(): void
     {
         $gitDriver = $this->createMock(GitDriver::class);
