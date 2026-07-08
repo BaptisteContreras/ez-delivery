@@ -2,6 +2,11 @@
 
 namespace Ezdeliver\Model;
 
+/*
+ * @rw
+ * I think you should write some doc about what is a PrReference. No need to do too much but it must be clear because this
+ * concept is important
+ */
 final readonly class PrReference
 {
     /**

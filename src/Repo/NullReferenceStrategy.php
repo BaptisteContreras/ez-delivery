@@ -16,4 +16,12 @@ final class NullReferenceStrategy implements PrReferenceStrategy
     {
         return null;
     }
+
+    /**
+     * @return array<string>
+     */
+    public function resolveLabels(Pr $pr): array
+    {
+        return $pr->getLabels();
+    }
 }

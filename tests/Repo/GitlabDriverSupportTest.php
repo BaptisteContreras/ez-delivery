@@ -6,9 +6,11 @@ use Ezdeliver\Config\Model\GithubRepoConfig;
 use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Repo\GithubDriver;
+use Ezdeliver\Repo\GitlabIssueLabelsUpdateStrategy;
 use Ezdeliver\Repo\GitlabLabelResolver;
 use Ezdeliver\Repo\GitlabLinkedIssueDriver;
 use Ezdeliver\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Repo\GitlabMrLabelsUpdateStrategy;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -91,5 +93,23 @@ class GitlabDriverSupportTest extends TestCase
     public function testMrLabelDriverReferenceStrategyDoesNotSupportReference(): void
     {
         $this->assertFalse($this->makeMrLabelDriver()->getPrReferenceStrategy()->supportsReference());
+    }
+
+    public function testLinkedIssueDriverLabelsUpdateStrategyIsGitlabIssueLabelsUpdateStrategy(): void
+    {
+        $this->assertInstanceOf(GitlabIssueLabelsUpdateStrategy::class, $this->makeLinkedIssueDriver()->getLabelsUpdateStrategy());
+    }
+
+    public function testMrLabelDriverLabelsUpdateStrategyIsGitlabMrLabelsUpdateStrategy(): void
+    {
+        $this->assertInstanceOf(GitlabMrLabelsUpdateStrategy::class, $this->makeMrLabelDriver()->getLabelsUpdateStrategy());
+    }
+
+    public function testGithubDriverLabelsUpdateStrategyThrows(): void
+    {
+        $driver = new GithubDriver($this->createMock(SymfonyStyle::class));
+
+        $this->expectException(\Exception::class);
+        $driver->getLabelsUpdateStrategy();
     }
 }

@@ -22,4 +22,6 @@ interface RemoteRepoDriver
     public function getPrs(ProjectRepoConfig $projectRepoConfig): array;
 
     public function getPrReferenceStrategy(): PrReferenceStrategy;
+
+    public function getLabelsUpdateStrategy(): LabelsUpdateStrategy;
 }

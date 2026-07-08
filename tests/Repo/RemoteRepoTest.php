@@ -11,11 +11,14 @@ use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\PrReference;
 use Ezdeliver\Repo\DriverNotFoundException;
 use Ezdeliver\Repo\GithubDriver;
+use Ezdeliver\Repo\GitlabIssueLabelsUpdateStrategy;
 use Ezdeliver\Repo\GitlabLabelResolver;
 use Ezdeliver\Repo\GitlabLinkedIssueDriver;
 use Ezdeliver\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Repo\GitlabMrLabelsUpdateStrategy;
 use Ezdeliver\Repo\IssueReferenceStrategy;
 use Ezdeliver\Repo\LabelsUpdate;
+use Ezdeliver\Repo\NullReferenceStrategy;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +48,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
         $driver->method('getPrs')->willReturn($prs);
+        $driver->method('getPrReferenceStrategy')->willReturn(new NullReferenceStrategy());
 
         return $driver;
     }
@@ -124,9 +128,11 @@ class RemoteRepoTest extends TestCase
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
+        $driver->method('getPrReferenceStrategy')->willReturn(new IssueReferenceStrategy());
+        $driver->method('getLabelsUpdateStrategy')->willReturn(new GitlabIssueLabelsUpdateStrategy());
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $pr = $this->makePr(1, ['to-deliver:staging', 'bug'], new PrReference(10, 'Issue title', []));
+        $pr = $this->makePr(1, ['unrelated-pr-label'], new PrReference(10, 'Issue title', ['to-deliver:staging', 'bug']));
 
         $capturedUpdates = null;
         $driver->expects($this->once())
@@ -145,12 +151,15 @@ class RemoteRepoTest extends TestCase
         $this->assertContains('delivered:staging', $update->getLabels());
         $this->assertNotContains('to-deliver:staging', $update->getLabels());
         $this->assertContains('bug', $update->getLabels());
+        $this->assertNotContains('unrelated-pr-label', $update->getLabels());
     }
 
     public function testUpdateLabelsTargetsThePrItselfWhenNoReference(): void
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
+        $driver->method('getPrReferenceStrategy')->willReturn(new NullReferenceStrategy());
+        $driver->method('getLabelsUpdateStrategy')->willReturn(new GitlabMrLabelsUpdateStrategy());
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
         $pr = $this->makePr(7, ['to-deliver:staging']);
@@ -173,6 +182,8 @@ class RemoteRepoTest extends TestCase
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
+        $driver->method('getPrReferenceStrategy')->willReturn(new NullReferenceStrategy());
+        $driver->method('getLabelsUpdateStrategy')->willReturn(new GitlabMrLabelsUpdateStrategy());
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
         $pr = $this->makePr(1, ['delivered:staging']);
@@ -218,9 +229,7 @@ class RemoteRepoTest extends TestCase
         $unsupportingDriver->method('support')->willReturn(false);
         $unsupportingDriver->expects($this->never())->method('getPrs');
 
-        $supportingDriver = $this->createMock(RemoteRepoDriver::class);
-        $supportingDriver->method('support')->willReturn(true);
-        $supportingDriver->method('getPrs')->willReturn([$matchingPr]);
+        $supportingDriver = $this->makeDriverThatSupports([$matchingPr]);
 
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 

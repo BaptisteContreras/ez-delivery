@@ -149,6 +149,11 @@ class GitlabMrLabelDriver implements RemoteRepoDriver
         return new NullReferenceStrategy();
     }
 
+    public function getLabelsUpdateStrategy(): LabelsUpdateStrategy
+    {
+        return new GitlabMrLabelsUpdateStrategy();
+    }
+
     private function verbose(string $line): void
     {
         if ($this->io->isVerbose()) {

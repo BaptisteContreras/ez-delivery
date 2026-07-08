@@ -31,7 +31,7 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
         $this->io->title('Getting data from Gitlab');
 
         $mrGraphqlQuery = sprintf(
-            'query { 
+            'query {
                     project(fullPath: "%s/%s") {
                         mergeRequests(first: 200, state: opened) {
                             nodes {
@@ -39,6 +39,11 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
                                 title
                                 description
                                 webUrl
+                                labels {
+                                    nodes {
+                                        title
+                                    }
+                                }
                                 commits(first: 100) {
                                     nodes {
                                         authorName
@@ -200,6 +205,11 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
     public function getPrReferenceStrategy(): PrReferenceStrategy
     {
         return new IssueReferenceStrategy();
+    }
+
+    public function getLabelsUpdateStrategy(): LabelsUpdateStrategy
+    {
+        return new GitlabIssueLabelsUpdateStrategy();
     }
 
     private function verbose(string $line): void

@@ -14,7 +14,7 @@ final class GitlabRawDataConverter
         return new Pr(
             $rawData['iid'],
             $rawData['title'],
-            $issue->getLabels(),
+            self::extractLabels($rawData['labels']['nodes']),
             new PrReference($issue->getId(), $issue->getTitle(), $issue->getLabels()),
             array_reverse(array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes']))
         );
@@ -25,7 +25,7 @@ final class GitlabRawDataConverter
         return new Pr(
             $rawData['iid'],
             $rawData['title'],
-            array_map(fn (array $labelData) => $labelData['title'], $rawData['labels']['nodes']),
+            self::extractLabels($rawData['labels']['nodes']),
             null,
             array_reverse(array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $rawData['commits']['nodes']))
         );
@@ -36,7 +36,7 @@ final class GitlabRawDataConverter
         return new Issue(
             $rawData['iid'],
             $rawData['title'],
-            array_map(fn (array $labelData) => $labelData['title'], $rawData['labels']['nodes'])
+            self::extractLabels($rawData['labels']['nodes'])
         );
     }
 
@@ -47,5 +47,15 @@ final class GitlabRawDataConverter
             $rawData['message'],
             new \DateTimeImmutable($rawData['committedDate']),
         );
+    }
+
+    /**
+     * @param array<array{title: string}> $labelNodes
+     *
+     * @return array<string>
+     */
+    private static function extractLabels(array $labelNodes): array
+    {
+        return array_map(fn (array $labelData) => $labelData['title'], $labelNodes);
     }
 }

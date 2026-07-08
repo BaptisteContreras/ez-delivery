@@ -16,4 +16,12 @@ final class IssueReferenceStrategy implements PrReferenceStrategy
     {
         return $pr->getReference();
     }
+
+    /**
+     * @return array<string>
+     */
+    public function resolveLabels(Pr $pr): array
+    {
+        return $pr->getReference()?->getLabels() ?? [];
+    }
 }

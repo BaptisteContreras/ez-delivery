@@ -23,18 +23,21 @@ class RemoteRepo
      */
     public function getPrsToDeliver(ProjectRepoConfig $projectRepoConfig, ProjectEnvConfig $selectedEnv): array
     {
-        $prs = $this->selectDriver($projectRepoConfig)->getPrs($projectRepoConfig);
+        $driver = $this->selectDriver($projectRepoConfig);
+        $prs = $driver->getPrs($projectRepoConfig);
+        $referenceStrategy = $driver->getPrReferenceStrategy();
 
         /** @var array<Pr> $prsToDeliver */
-        $prsToDeliver = array_filter($prs, function (Pr $pr) use ($selectedEnv) {
-            $matches = $pr->hasLabel($selectedEnv->getToDeliverLabel()) || $pr->hasLabel($selectedEnv->getAlreadyDeliveredLabel());
+        $prsToDeliver = array_filter($prs, function (Pr $pr) use ($selectedEnv, $referenceStrategy) {
+            $labels = $referenceStrategy->resolveLabels($pr);
+            $matches = in_array($selectedEnv->getToDeliverLabel(), $labels, true) || in_array($selectedEnv->getAlreadyDeliveredLabel(), $labels, true);
 
             $this->verbose(sprintf(
                 'PR #%s "%s" %s: labels [%s] vs to-deliver "%s" / already-delivered "%s"',
                 $pr->getId(),
                 $pr->getTitle(),
                 $matches ? 'INCLUDED' : 'excluded',
-                implode(', ', $pr->getLabels()),
+                implode(', ', $labels),
                 $selectedEnv->getToDeliverLabel(),
                 $selectedEnv->getAlreadyDeliveredLabel()
             ));
@@ -57,25 +60,25 @@ class RemoteRepo
 
     /**
      * @param array<Pr> $prsDelivered
+     *
+     * @rw#4 I think we should rename and maybe add some quick doc about this method. It does not just update labels, it updates the labels that are used to select the PR
      */
     public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $prsDelivered, ProjectEnvConfig $selectedEnv): void
     {
-        $prsToUpdate = array_filter($prsDelivered, fn (Pr $pr) => $pr->hasLabel($selectedEnv->getToDeliverLabel()));
+        $driver = $this->selectDriver($projectRepoConfig); // @rw#3 rename $driver to $remoteRepoDriver
+        $referenceStrategy = $driver->getPrReferenceStrategy();
+        $updateStrategy = $driver->getLabelsUpdateStrategy();
 
-        $labelUpdates = array_map(function (Pr $pr) use ($selectedEnv) {
-            $labels = array_filter($pr->getLabels(), fn ($label) => $label !== $selectedEnv->getToDeliverLabel());
+        $prsToUpdate = array_filter($prsDelivered, fn (Pr $pr) => in_array($selectedEnv->getToDeliverLabel(), $referenceStrategy->resolveLabels($pr), true));
+
+        $labelUpdates = array_map(function (Pr $pr) use ($selectedEnv, $referenceStrategy, $updateStrategy) {
+            $labels = array_filter($referenceStrategy->resolveLabels($pr), fn ($label) => $label !== $selectedEnv->getToDeliverLabel());
             $labels[] = $selectedEnv->getAlreadyDeliveredLabel();
 
-            $reference = $pr->getReference();
-
-            return new LabelsUpdate(
-                $reference?->getId() ?? $pr->getId(),
-                $reference?->getTitle() ?? $pr->getTitle(),
-                array_values(array_unique($labels))
-            );
+            return $updateStrategy->buildUpdate($pr, array_values(array_unique($labels)));
         }, $prsToUpdate);
 
-        $this->selectDriver($projectRepoConfig)->updateLabels($projectRepoConfig, $labelUpdates);
+        $driver->updateLabels($projectRepoConfig, $labelUpdates);
     }
 
     /**

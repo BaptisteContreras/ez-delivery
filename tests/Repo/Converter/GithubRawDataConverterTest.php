@@ -59,12 +59,15 @@ class GithubRawDataConverterTest extends TestCase
         $this->assertEquals(new \DateTimeImmutable('2024-04-10 08:30:00'), $commit->getDate());
     }
 
-    public function testBuildPrFromRawData(): void
+    public function testBuildPrFromRawDataUsesThePrsOwnLabelsNotTheIssues(): void
     {
         $raw = [
             'node' => [
                 'number' => 99,
                 'title' => 'Big PR',
+                'labels' => [
+                    'edges' => [['node' => ['name' => 'size/L']]],
+                ],
                 'closingIssuesReferences' => [
                     'edges' => [
                         [
@@ -98,10 +101,13 @@ class GithubRawDataConverterTest extends TestCase
 
         $this->assertSame(99, $pr->getId());
         $this->assertSame('Big PR', $pr->getTitle());
+        $this->assertSame(['size/L'], $pr->getLabels());
+        $this->assertTrue($pr->hasLabel('size/L'));
+        $this->assertFalse($pr->hasLabel('to-deliver'));
         $this->assertSame(7, $pr->getReference()->getId());
         $this->assertSame('GitHub issue', $pr->getReference()->getTitle());
+        $this->assertSame(['to-deliver'], $pr->getReference()->getLabels());
         $this->assertCount(1, $pr->getCommits());
         $this->assertSame('sha1', $pr->getCommits()[0]->getSha());
-        $this->assertTrue($pr->hasLabel('to-deliver'));
     }
 }

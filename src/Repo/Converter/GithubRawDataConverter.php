@@ -17,7 +17,7 @@ final class GithubRawDataConverter
         return new Pr(
             $prData['number'],
             $prData['title'],
-            $issue->getLabels(),
+            self::extractLabels($prData['labels']),
             new PrReference($issue->getId(), $issue->getTitle(), $issue->getLabels()),
             array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
         );
@@ -25,12 +25,10 @@ final class GithubRawDataConverter
 
     public static function buildIssueFromRawData(array $rawData): Issue
     {
-        $labelsData = !empty($rawData['labels']['edges']) ? $rawData['labels']['edges'] : [];
-
         return new Issue(
             $rawData['number'],
             $rawData['title'],
-            array_map(fn (array $labelData) => $labelData['node']['name'], $labelsData)
+            self::extractLabels($rawData['labels'])
         );
     }
 
@@ -43,5 +41,15 @@ final class GithubRawDataConverter
             $commitData['message'],
             new \DateTimeImmutable($commitData['committedDate']),
         );
+    }
+
+    /**
+     * @return array<string>
+     */
+    private static function extractLabels(array $labelsData): array
+    {
+        $labelEdges = !empty($labelsData['edges']) ? $labelsData['edges'] : [];
+
+        return array_map(fn (array $labelData) => $labelData['node']['name'], $labelEdges);
     }
 }

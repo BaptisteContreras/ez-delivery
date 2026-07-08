@@ -43,13 +43,17 @@ class GitlabRawDataConverterTest extends TestCase
         $this->assertEquals(new \DateTimeImmutable('2024-03-15 12:00:00'), $commit->getDate());
     }
 
-    public function testBuildPrFromRawDataReversesCommitOrderToChronological(): void
+    public function testBuildPrFromRawDataUsesTheMrsOwnLabelsNotTheIssues(): void
     {
-        // Gitlab API returns commits newest-first; converter must reverse to oldest-first.
-        $issue = new Issue(10, 'issue', []);
+        $issue = new Issue(10, 'issue', ['to-deliver:staging']);
         $raw = [
             'iid' => 5,
             'title' => 'Add feature',
+            'labels' => [
+                'nodes' => [
+                    ['title' => 'size/L'],
+                ],
+            ],
             'commits' => [
                 'nodes' => [
                     ['sha' => 'sha-newest', 'message' => 'second commit', 'committedDate' => '2024-03-15 12:00:00'],
@@ -62,9 +66,12 @@ class GitlabRawDataConverterTest extends TestCase
 
         $this->assertSame(5, $pr->getId());
         $this->assertSame('Add feature', $pr->getTitle());
-        $this->assertSame([], $pr->getLabels());
+        $this->assertSame(['size/L'], $pr->getLabels());
+        $this->assertTrue($pr->hasLabel('size/L'));
+        $this->assertFalse($pr->hasLabel('to-deliver:staging'));
         $this->assertSame(10, $pr->getReference()->getId());
         $this->assertSame('issue', $pr->getReference()->getTitle());
+        $this->assertSame(['to-deliver:staging'], $pr->getReference()->getLabels());
         $this->assertCount(2, $pr->getCommits());
         $this->assertSame('sha-oldest', $pr->getCommits()[0]->getSha());
         $this->assertSame('sha-newest', $pr->getCommits()[1]->getSha());
