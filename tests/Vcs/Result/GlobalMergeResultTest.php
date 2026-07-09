@@ -3,8 +3,8 @@
 namespace Ezdeliver\Tests\Vcs\Result;
 
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\Selector;
 use Ezdeliver\Vcs\Result\GlobalMergeResult;
 use Ezdeliver\Vcs\Result\MergeResult;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +13,7 @@ class GlobalMergeResultTest extends TestCase
 {
     private function makePr(): Pr
     {
-        return new Pr(1, 'PR title', new Issue(10, 'issue', []), []);
+        return new Pr(1, 'PR title', new Selector(10, 'issue', []), []);
     }
 
     private function makeCommit(): Commit

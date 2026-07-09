@@ -5,8 +5,8 @@ namespace Ezdeliver\Tests\Repo;
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\Selector;
 use Ezdeliver\Repo\DriverNotFoundException;
 use Ezdeliver\Repo\IssueLabelsUpdate;
 use Ezdeliver\Repo\RemoteRepo;
@@ -26,19 +26,19 @@ class RemoteRepoTest extends TestCase
         return new ProjectEnvConfig('staging', 'delivered:staging', 'to-deliver:staging');
     }
 
-    private function makePr(int $id, array $issueLabels): Pr
+    private function makePr(int $id, array $selectorLabels): Pr
     {
-        $issue = new Issue($id * 10, "Issue $id", $issueLabels);
+        $selector = new Selector($id * 10, "Issue $id", $selectorLabels);
         $commit = new Commit("sha$id", 'message', new \DateTimeImmutable());
 
-        return new Pr($id, "PR $id", $issue, [$commit]);
+        return new Pr($id, "PR $id", $selector, [$commit]);
     }
 
     private function makeDriverThatSupports(array $prs = []): RemoteRepoDriver
     {
         $driver = $this->createMock(RemoteRepoDriver::class);
         $driver->method('support')->willReturn(true);
-        $driver->method('getPrsWithLinkedIssue')->willReturn($prs);
+        $driver->method('getPrs')->willReturn($prs);
 
         return $driver;
     }
@@ -121,8 +121,8 @@ class RemoteRepoTest extends TestCase
         $driver->method('support')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $issue = new Issue(10, 'Issue title', ['to-deliver:staging', 'bug']);
-        $pr = new Pr(1, 'PR title', $issue, []);
+        $selector = new Selector(10, 'Issue title', ['to-deliver:staging', 'bug']);
+        $pr = new Pr(1, 'PR title', $selector, []);
 
         $capturedUpdates = null;
         $driver->expects($this->once())
@@ -149,8 +149,8 @@ class RemoteRepoTest extends TestCase
         $driver->method('support')->willReturn(true);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $issue = new Issue(10, 'Issue title', ['delivered:staging']);
-        $pr = new Pr(1, 'PR title', $issue, []);
+        $selector = new Selector(10, 'Issue title', ['delivered:staging']);
+        $pr = new Pr(1, 'PR title', $selector, []);
 
         $driver->expects($this->once())
             ->method('updateLabels')

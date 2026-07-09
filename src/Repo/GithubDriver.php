@@ -24,7 +24,7 @@ class GithubDriver implements RemoteRepoDriver
     /**
      * @param GithubRepoConfig $projectRepoConfig
      */
-    public function getPrsWithLinkedIssue(ProjectRepoConfig $projectRepoConfig): array
+    public function getPrs(ProjectRepoConfig $projectRepoConfig): array
     {
         $this->io->title('Getting data from Github');
 

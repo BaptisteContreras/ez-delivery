@@ -3,8 +3,8 @@
 namespace Ezdeliver\Repo\Converter;
 
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\Selector;
 
 final class GithubRawDataConverter
 {
@@ -15,16 +15,16 @@ final class GithubRawDataConverter
         return new Pr(
             $prData['number'],
             $prData['title'],
-            self::buildIssueFromRawData($prData['closingIssuesReferences']['edges'][0]['node']),
+            self::buildSelectorFromRawData($prData['closingIssuesReferences']['edges'][0]['node']),
             array_map(fn (array $commitData) => self::buildCommitFromRawData($commitData), $prData['commits']['edges']),
         );
     }
 
-    public static function buildIssueFromRawData(array $rawData): Issue
+    public static function buildSelectorFromRawData(array $rawData): Selector
     {
         $labelsData = !empty($rawData['labels']['edges']) ? $rawData['labels']['edges'] : [];
 
-        return new Issue(
+        return new Selector(
             $rawData['number'],
             $rawData['title'],
             array_map(fn (array $labelData) => $labelData['node']['name'], $labelsData)

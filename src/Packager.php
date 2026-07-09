@@ -169,8 +169,8 @@ class Packager
             array_map(fn (Pr $pr) => [
                 $pr->getId(),
                 $pr->getTitle(),
-                $pr->getClosingIssueId(),
-                $pr->getClosingIssueTitle(),
+                $pr->getSelectorId(),
+                $pr->getSelectorTitle(),
                 $pr->getCommitsCount()],
                 $prsToDeliver
             )

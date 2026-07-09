@@ -115,8 +115,8 @@ class GitWorkspace
             '%s-   #!%s, #%s, "%s", %s, [%s] %s',
             $gitMessage,
             $pr->getId(),
-            $pr->getClosingIssueId(),
-            $pr->getClosingIssueTitle(),
+            $pr->getSelectorId(),
+            $pr->getSelectorTitle(),
             $pr->getCommitsCount(),
             $commits,
             PHP_EOL

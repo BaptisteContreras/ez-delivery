@@ -10,7 +10,7 @@ final class Pr
     public function __construct(
         private readonly int $id,
         private readonly string $title,
-        private readonly Issue $closingIssue,
+        private readonly Selector $selector,
         private readonly array $commits,
         private bool $handled = false,
     ) {
@@ -26,19 +26,27 @@ final class Pr
         return $this->title;
     }
 
-    public function getClosingIssueId(): int
+    public function getSelector(): Selector
     {
-        return $this->closingIssue->getId();
+        return $this->selector;
     }
 
-    public function getClosingIssueTitle(): string
+    public function getSelectorId(): int
     {
-        return $this->closingIssue->getTitle();
+        return $this->selector->getId();
     }
 
-    public function getClosingIssue(): Issue
+    public function getSelectorTitle(): string
     {
-        return $this->closingIssue;
+        return $this->selector->getTitle();
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getSelectorLabels(): array
+    {
+        return $this->selector->getLabels();
     }
 
     /**
@@ -47,11 +55,6 @@ final class Pr
     public function getCommits(): array
     {
         return $this->commits;
-    }
-
-    public function hasClosingIssueWithLabel(string $label): bool
-    {
-        return $this->closingIssue->hasLabel($label);
     }
 
     public function getCommitsCount(): int

@@ -4,7 +4,6 @@ namespace Ezdeliver\Repo;
 
 use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Repo\Converter\GitlabRawDataConverter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -25,7 +24,7 @@ class GitlabDriver implements RemoteRepoDriver
     /**
      * @param GitlabRepoConfig $projectRepoConfig
      */
-    public function getPrsWithLinkedIssue(ProjectRepoConfig $projectRepoConfig): array
+    public function getPrs(ProjectRepoConfig $projectRepoConfig): array
     {
         $this->io->title('Getting data from Gitlab');
 
@@ -91,24 +90,24 @@ class GitlabDriver implements RemoteRepoDriver
 
         $this->verbose(sprintf('Fetched %d issue(s) for iids [%s]', count($rawIssues['data']['project']['issues']['nodes']), $issuesId));
 
-        $issuesMap = [];
+        $selectorsMap = [];
 
         foreach ($rawIssues['data']['project']['issues']['nodes'] as $rawIssue) {
-            $issuesMap[$rawIssue['iid']] = GitlabRawDataConverter::buildIssueFromRawData($rawIssue);
+            $selectorsMap[$rawIssue['iid']] = GitlabRawDataConverter::buildSelectorFromRawData($rawIssue);
         }
 
         $mrs = [];
 
         foreach ($rawMrs['data']['project']['mergeRequests']['nodes'] as $rawMr) {
-            $issue = $issuesMap[$this->extractIssueIdFromDescription($rawMr['description'])] ?? null;
+            $selector = $selectorsMap[$this->extractIssueIdFromDescription($rawMr['description'])] ?? null;
 
-            if (!$issue) {
+            if (!$selector) {
                 $this->verbose(sprintf('MR !%s "%s" skipped: no linkable issue found in description', $rawMr['iid'], $rawMr['title']));
 
                 continue;
             }
 
-            $mrs[] = GitlabRawDataConverter::buildPrFromRawData($rawMr, $issue);
+            $mrs[] = GitlabRawDataConverter::buildPrFromRawData($rawMr, $selector);
         }
 
         return $mrs;

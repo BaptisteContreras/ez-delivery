@@ -2,13 +2,13 @@
 
 namespace Ezdeliver\Tests\Repo\Converter;
 
-use Ezdeliver\Model\Issue;
+use Ezdeliver\Model\Selector;
 use Ezdeliver\Repo\Converter\GitlabRawDataConverter;
 use PHPUnit\Framework\TestCase;
 
 class GitlabRawDataConverterTest extends TestCase
 {
-    public function testBuildIssueFromRawData(): void
+    public function testBuildSelectorFromRawData(): void
     {
         $raw = [
             'iid' => 42,
@@ -21,11 +21,11 @@ class GitlabRawDataConverterTest extends TestCase
             ],
         ];
 
-        $issue = GitlabRawDataConverter::buildIssueFromRawData($raw);
+        $selector = GitlabRawDataConverter::buildSelectorFromRawData($raw);
 
-        $this->assertSame(42, $issue->getId());
-        $this->assertSame('Fix the bug', $issue->getTitle());
-        $this->assertSame(['bug', 'to-deliver'], $issue->getLabels());
+        $this->assertSame(42, $selector->getId());
+        $this->assertSame('Fix the bug', $selector->getTitle());
+        $this->assertSame(['bug', 'to-deliver'], $selector->getLabels());
     }
 
     public function testBuildCommitFromRawData(): void
@@ -46,7 +46,7 @@ class GitlabRawDataConverterTest extends TestCase
     public function testBuildPrFromRawDataReversesCommitOrderToChronological(): void
     {
         // Gitlab API returns commits newest-first; converter must reverse to oldest-first.
-        $issue = new Issue(10, 'issue', []);
+        $selector = new Selector(10, 'issue', []);
         $raw = [
             'iid' => 5,
             'title' => 'Add feature',
@@ -58,11 +58,11 @@ class GitlabRawDataConverterTest extends TestCase
             ],
         ];
 
-        $pr = GitlabRawDataConverter::buildPrFromRawData($raw, $issue);
+        $pr = GitlabRawDataConverter::buildPrFromRawData($raw, $selector);
 
         $this->assertSame(5, $pr->getId());
         $this->assertSame('Add feature', $pr->getTitle());
-        $this->assertSame($issue, $pr->getClosingIssue());
+        $this->assertSame($selector, $pr->getSelector());
         $this->assertCount(2, $pr->getCommits());
         $this->assertSame('sha-oldest', $pr->getCommits()[0]->getSha());
         $this->assertSame('sha-newest', $pr->getCommits()[1]->getSha());

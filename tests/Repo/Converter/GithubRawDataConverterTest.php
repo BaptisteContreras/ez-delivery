@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class GithubRawDataConverterTest extends TestCase
 {
-    public function testBuildIssueFromRawData(): void
+    public function testBuildSelectorFromRawData(): void
     {
         $raw = [
             'number' => 7,
@@ -20,14 +20,14 @@ class GithubRawDataConverterTest extends TestCase
             ],
         ];
 
-        $issue = GithubRawDataConverter::buildIssueFromRawData($raw);
+        $selector = GithubRawDataConverter::buildSelectorFromRawData($raw);
 
-        $this->assertSame(7, $issue->getId());
-        $this->assertSame('GitHub issue', $issue->getTitle());
-        $this->assertSame(['bug', 'to-deliver'], $issue->getLabels());
+        $this->assertSame(7, $selector->getId());
+        $this->assertSame('GitHub issue', $selector->getTitle());
+        $this->assertSame(['bug', 'to-deliver'], $selector->getLabels());
     }
 
-    public function testBuildIssueFromRawDataWithNoLabels(): void
+    public function testBuildSelectorFromRawDataWithNoLabels(): void
     {
         $raw = [
             'number' => 7,
@@ -35,9 +35,9 @@ class GithubRawDataConverterTest extends TestCase
             'labels' => ['edges' => []],
         ];
 
-        $issue = GithubRawDataConverter::buildIssueFromRawData($raw);
+        $selector = GithubRawDataConverter::buildSelectorFromRawData($raw);
 
-        $this->assertSame([], $issue->getLabels());
+        $this->assertSame([], $selector->getLabels());
     }
 
     public function testBuildCommitFromRawData(): void
@@ -98,9 +98,9 @@ class GithubRawDataConverterTest extends TestCase
 
         $this->assertSame(99, $pr->getId());
         $this->assertSame('Big PR', $pr->getTitle());
-        $this->assertSame(7, $pr->getClosingIssueId());
+        $this->assertSame(7, $pr->getSelector()->getId());
         $this->assertCount(1, $pr->getCommits());
         $this->assertSame('sha1', $pr->getCommits()[0]->getSha());
-        $this->assertTrue($pr->hasClosingIssueWithLabel('to-deliver'));
+        $this->assertTrue($pr->getSelector()->hasLabel('to-deliver'));
     }
 }

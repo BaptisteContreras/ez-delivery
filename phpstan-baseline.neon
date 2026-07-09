@@ -25,7 +25,7 @@ parameters:
 			path: src/Repo/Converter/GithubRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GithubRawDataConverter\:\:buildIssueFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Repo\\Converter\\GithubRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Repo/Converter/GithubRawDataConverter.php
@@ -43,7 +43,7 @@ parameters:
 			path: src/Repo/Converter/GitlabRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GitlabRawDataConverter\:\:buildIssueFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Repo\\Converter\\GitlabRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Repo/Converter/GitlabRawDataConverter.php

@@ -4,8 +4,8 @@ namespace Ezdeliver\Tests\Vcs;
 
 use Castor\Context;
 use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Issue;
 use Ezdeliver\Model\Pr;
+use Ezdeliver\Model\Selector;
 use Ezdeliver\Vcs\GitDriver;
 use Ezdeliver\Vcs\GitWorkspace;
 use Ezdeliver\Vcs\MergeStrategyInterface;
@@ -32,7 +32,7 @@ class GitWorkspaceTest extends TestCase
 
     private function makePr(int $id, array $commits = []): Pr
     {
-        return new Pr($id, "PR #$id", new Issue($id * 10, 'issue', []), $commits);
+        return new Pr($id, "PR #$id", new Selector($id * 10, 'issue', []), $commits);
     }
 
     public function testIsClearReturnsTrueWhenNothingToCommit(): void
@@ -168,7 +168,7 @@ class GitWorkspaceTest extends TestCase
     {
         $gitDriver = $this->createMock(GitDriver::class);
         $commit = $this->makeCommit('sha-abc');
-        $pr = new Pr(42, 'PR #42', new Issue(10, 'Fix the bug', []), [$commit]);
+        $pr = new Pr(42, 'PR #42', new Selector(10, 'Fix the bug', []), [$commit]);
 
         $capturedMessage = null;
         $gitDriver->expects($this->once())
@@ -193,7 +193,7 @@ class GitWorkspaceTest extends TestCase
         // builds the git command as an argument array rather than a shell string - confirm that
         // chain still holds even when the issue title itself legitimately contains a `"`,
         // i.e. that the older double-quote-in-title fix (GitDriverTest) wasn't undone by this one.
-        $pr = new Pr(1, 'PR #1', new Issue(10, 'Fix the "login" bug', []), [$this->makeCommit('sha-abc')]);
+        $pr = new Pr(1, 'PR #1', new Selector(10, 'Fix the "login" bug', []), [$this->makeCommit('sha-abc')]);
 
         $addPrInfo = new \ReflectionMethod(GitWorkspace::class, 'addPrInfo');
         $addPrInfo->setAccessible(true);
