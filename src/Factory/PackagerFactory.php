@@ -7,6 +7,7 @@ use Ezdeliver\InteractionHandler;
 use Ezdeliver\Packager;
 use Ezdeliver\StorageHandler as PackageStorageHandler;
 use Ezdeliver\Vcs\GitDriver;
+use Ezdeliver\Vcs\IssueSelectorReleaseInfoFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -43,7 +44,7 @@ class PackagerFactory
         );
 
         $this->remoteRepoFactory = new RemoteRepoFactory($this->io);
-        $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io);
+        $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io, new IssueSelectorReleaseInfoFormatter());
     }
 
     public static function initFromCastorGlobalContext(): self

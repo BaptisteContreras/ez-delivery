@@ -3,7 +3,6 @@
 namespace Ezdeliver\Vcs;
 
 use Castor\Context;
-use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Vcs\Result\GlobalMergeResult;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -14,6 +13,7 @@ class GitWorkspace
         private readonly GitDriver $gitDriver,
         private readonly Context $context,
         private readonly MergeStrategyInterface $mergeStrategy,
+        private readonly PrReleaseInfoFormatter $prReleaseInfoFormatter,
         private readonly SymfonyStyle $io,
     ) {
     }
@@ -101,26 +101,10 @@ class GitWorkspace
         $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
 
         foreach ($prsDelivered as $pr) {
-            $gitMessage = $this->addPrInfo($pr, $gitMessage);
+            $gitMessage .= $this->prReleaseInfoFormatter->format($pr);
         }
 
         $this->verbose('git commit', $this->gitDriver->commit($this->context, $gitMessage, true));
-    }
-
-    private function addPrInfo(Pr $pr, string $gitMessage): string
-    {
-        $commits = implode(';', array_map(fn (Commit $commit) => sprintf('"%s"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
-
-        return sprintf(
-            '%s-   #!%s, #%s, "%s", %s, [%s] %s',
-            $gitMessage,
-            $pr->getId(),
-            $pr->getSelectorId(),
-            $pr->getSelectorTitle(),
-            $pr->getCommitsCount(),
-            $commits,
-            PHP_EOL
-        );
     }
 
     public function pushRelease(string $branchName): void

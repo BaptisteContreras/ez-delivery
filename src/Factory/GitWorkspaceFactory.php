@@ -6,6 +6,7 @@ use Castor\Context;
 use Ezdeliver\Vcs\CherryPickMergeStrategy;
 use Ezdeliver\Vcs\GitDriver;
 use Ezdeliver\Vcs\GitWorkspace;
+use Ezdeliver\Vcs\PrReleaseInfoFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class GitWorkspaceFactory
@@ -15,6 +16,7 @@ class GitWorkspaceFactory
     public function __construct(
         private readonly GitDriver $gitDriver,
         private readonly SymfonyStyle $io,
+        private readonly PrReleaseInfoFormatter $prReleaseInfoFormatter,
     ) {
     }
 
@@ -24,6 +26,7 @@ class GitWorkspaceFactory
             $this->gitDriver,
             $context,
             $this->createCherryPickMergeStrategy(),
+            $this->prReleaseInfoFormatter,
             $this->io
         );
     }
