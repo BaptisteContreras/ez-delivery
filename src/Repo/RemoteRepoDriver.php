@@ -20,9 +20,9 @@ interface RemoteRepoDriver
     public function supportLabelsUpdate(): bool;
 
     /**
-     * @param array<IssueLabelsUpdate> $issuesLabelsUpdates
+     * @param array<LabelsUpdate> $labelsUpdates
      */
-    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void;
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $labelsUpdates): void;
 
     /**
      * @return array<Pr> each already carrying its Selector

@@ -45,10 +45,10 @@ cs-check: ## Run PHP CS Fixer in dry-run mode
 	$(PHP) /app/vendor/bin/php-cs-fixer fix --dry-run --diff
 
 phpstan: ## Run PHPStan static analysis
-	$(PHP) /app/vendor/bin/phpstan analyse
+	$(PHP) /app/vendor/bin/phpstan analyse --memory-limit=1G
 
 phpstan-baseline: ## Regenerate the PHPStan baseline for currently-ignored errors
-	$(PHP) /app/vendor/bin/phpstan analyse --generate-baseline
+	$(PHP) /app/vendor/bin/phpstan analyse --memory-limit=1G --generate-baseline
 
 prod-build: ## Build the prod image, tagged with a version (prompts if VERSION is not set)
 	@if [ -z "$(VERSION)" ]; then \

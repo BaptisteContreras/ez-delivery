@@ -8,7 +8,7 @@ use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\Selector;
 use Ezdeliver\Repo\DriverNotFoundException;
-use Ezdeliver\Repo\IssueLabelsUpdate;
+use Ezdeliver\Repo\LabelsUpdate;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
@@ -134,10 +134,10 @@ class RemoteRepoTest extends TestCase
         $this->makeRemoteRepo([$driver])->updateLabels($repoConfig, [$pr], $this->makeEnv());
 
         $this->assertCount(1, $capturedUpdates);
-        /** @var IssueLabelsUpdate $update */
+        /** @var LabelsUpdate $update */
         $update = array_values($capturedUpdates)[0];
-        $this->assertSame(10, $update->getIssueId());
-        $this->assertSame('Issue title', $update->getIssueTitle());
+        $this->assertSame(10, $update->getTargetId());
+        $this->assertSame('Issue title', $update->getTargetTitle());
         $this->assertContains('delivered:staging', $update->getLabels());
         $this->assertNotContains('to-deliver:staging', $update->getLabels());
         $this->assertContains('bug', $update->getLabels());

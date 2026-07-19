@@ -62,17 +62,17 @@ class RemoteRepo
             fn (Selector $selector) => $selector->hasLabel($selectedEnv->getToDeliverLabel())
         );
 
-        $issueLabelUpdates = array_map(function (Selector $selector) use ($selectedEnv) {
+        $labelUpdates = array_map(function (Selector $selector) use ($selectedEnv) {
             $labels = $selector->getLabels();
 
             $labels = array_filter($labels, fn ($label) => $label !== $selectedEnv->getToDeliverLabel());
 
             $labels[] = $selectedEnv->getAlreadyDeliveredLabel();
 
-            return new IssueLabelsUpdate($selector->getId(), $selector->getTitle(), array_values(array_unique($labels)));
+            return new LabelsUpdate($selector->getId(), $selector->getTitle(), array_values(array_unique($labels)));
         }, $selectorsToUpdate);
 
-        $this->selectDriver($projectRepoConfig)->updateLabels($projectRepoConfig, $issueLabelUpdates);
+        $this->selectDriver($projectRepoConfig)->updateLabels($projectRepoConfig, $labelUpdates);
     }
 
     /**

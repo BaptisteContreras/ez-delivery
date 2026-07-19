@@ -61,7 +61,7 @@ class GithubDriver implements RemoteRepoDriver
         return false;
     }
 
-    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $issuesLabelsUpdates): void
+    public function updateLabels(ProjectRepoConfig $projectRepoConfig, array $labelsUpdates): void
     {
         throw new \Exception('Not implemented');
     }
