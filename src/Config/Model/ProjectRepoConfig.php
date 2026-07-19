@@ -34,4 +34,6 @@ abstract class ProjectRepoConfig
     {
         return $this->type;
     }
+
+    abstract public function getMode(): PrSelectionMode;
 }

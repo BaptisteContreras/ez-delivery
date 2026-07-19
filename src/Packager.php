@@ -7,6 +7,7 @@ use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\Model\ProjectConfiguration;
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Factory\GitWorkspaceFactory;
+use Ezdeliver\Factory\PrDisplayStrategyFactory;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 use Ezdeliver\Model\Release;
@@ -28,6 +29,7 @@ class Packager
         private readonly SymfonyStyle $io,
         private readonly RemoteRepo $remoteRepo,
         private readonly GitWorkspaceFactory $gitWorkspaceFactory,
+        private readonly PrDisplayStrategyFactory $prDisplayStrategyFactory,
         private readonly string $configsDirPath,
     ) {
     }
@@ -104,8 +106,11 @@ class Packager
             return self::RETURN_CODE_OK;
         }
 
+        $mode = $projectConfig->getRepo()->getMode();
+
         $this->io->title('About to deliver theses PRs');
-        $this->displayPrsToDeliver($prsToDeliver);
+        $this->io->info(sprintf('PR selection mode: %s', $mode->value));
+        $this->prDisplayStrategyFactory->create($mode)->display($prsToDeliver);
 
         if (!$this->interactionHandler->askToProceedRelease($selectedEnv)) {
             $this->io->error('Delivery aborted by user');
@@ -157,24 +162,6 @@ class Packager
         }
 
         return self::RETURN_CODE_OK;
-    }
-
-    /**
-     * @param array<Pr> $prsToDeliver
-     */
-    private function displayPrsToDeliver(array $prsToDeliver): void
-    {
-        $this->io->table(
-            ['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
-            array_map(fn (Pr $pr) => [
-                $pr->getId(),
-                $pr->getTitle(),
-                $pr->getSelectorId(),
-                $pr->getSelectorTitle(),
-                $pr->getCommitsCount()],
-                $prsToDeliver
-            )
-        );
     }
 
     private function resume(

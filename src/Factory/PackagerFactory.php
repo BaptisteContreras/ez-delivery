@@ -21,6 +21,7 @@ class PackagerFactory
     private readonly SfFactory $sfFactory;
     private readonly RemoteRepoFactory $remoteRepoFactory;
     private readonly GitWorkspaceFactory $gitWorkspaceFactory;
+    private readonly PrDisplayStrategyFactory $prDisplayStrategyFactory;
 
     private ?PackageStorageHandler $packageStorageHandler = null;
     private ?Packager $packager = null;
@@ -45,6 +46,7 @@ class PackagerFactory
 
         $this->remoteRepoFactory = new RemoteRepoFactory($this->io);
         $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io, new IssueSelectorReleaseInfoFormatter());
+        $this->prDisplayStrategyFactory = new PrDisplayStrategyFactory($this->io);
     }
 
     public static function initFromCastorGlobalContext(): self
@@ -66,6 +68,7 @@ class PackagerFactory
             $this->io,
             $this->remoteRepoFactory->createRemoteRepo(),
             $this->gitWorkspaceFactory,
+            $this->prDisplayStrategyFactory,
             $this->getConfigsDirPathFromContext()
         );
     }

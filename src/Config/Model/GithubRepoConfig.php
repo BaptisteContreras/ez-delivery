@@ -18,4 +18,9 @@ class GithubRepoConfig extends ProjectRepoConfig
     {
         return $this->owner;
     }
+
+    public function getMode(): PrSelectionMode
+    {
+        return PrSelectionMode::LinkedIssue;
+    }
 }
