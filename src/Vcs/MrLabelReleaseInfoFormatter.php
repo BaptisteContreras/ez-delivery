@@ -5,7 +5,7 @@ namespace Ezdeliver\Vcs;
 use Ezdeliver\Model\Commit;
 use Ezdeliver\Model\Pr;
 
-final class IssueSelectorReleaseInfoFormatter implements PrReleaseInfoFormatter
+final class MrLabelReleaseInfoFormatter implements PrReleaseInfoFormatter
 {
     /**
      * @param array<Pr> $prsDelivered
@@ -14,7 +14,7 @@ final class IssueSelectorReleaseInfoFormatter implements PrReleaseInfoFormatter
     {
         $message = sprintf('AUTO RELEASE %s', PHP_EOL);
         $message .= sprintf('Number of PRs delivered : %s %s', count($prsDelivered), PHP_EOL);
-        $message .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
+        $message .= sprintf('PR #ID, PR title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
 
         foreach ($prsDelivered as $pr) {
             $message .= $this->formatPr($pr);
@@ -28,10 +28,9 @@ final class IssueSelectorReleaseInfoFormatter implements PrReleaseInfoFormatter
         $commits = implode(';', array_map(fn (Commit $commit) => sprintf('"%s"%s', $commit->getSha(), $commit->isConflict() ? ' (with conflict)' : ''), $pr->getCommits()));
 
         return sprintf(
-            '-   #!%s, #%s, "%s", %s, [%s] %s',
+            '-   #!%s, "%s", %s, [%s] %s',
             $pr->getId(),
-            $pr->getSelectorId(),
-            $pr->getSelectorTitle(),
+            $pr->getTitle(),
             $pr->getCommitsCount(),
             $commits,
             PHP_EOL

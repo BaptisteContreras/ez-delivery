@@ -60,10 +60,11 @@ class Packager
 
         $projectConfig = $this->configHandler->loadProjectConfig($project);
         $selectedEnv = $this->interactionHandler->askToSelectEnv($projectConfig);
+        $mode = $projectConfig->getRepo()->getMode();
 
         $currentContext = $this->context->withWorkingDirectory($projectConfig->getSrc());
 
-        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($currentContext);
+        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($currentContext, $mode);
 
         if ($this->storageHandler->hasPausedDelivery($projectConfig)) {
             $this->io->warning('Paused delivery found');
@@ -105,8 +106,6 @@ class Packager
 
             return self::RETURN_CODE_OK;
         }
-
-        $mode = $projectConfig->getRepo()->getMode();
 
         $this->io->title('About to deliver theses PRs');
         $this->io->info(sprintf('PR selection mode: %s', $mode->value));
@@ -172,6 +171,7 @@ class Packager
     ): int {
         $conflictingPr = $release->getConflictingPr();
         $conflictingCommit = $release->getConflictingCommit();
+        $mode = $projectConfiguration->getRepo()->getMode();
 
         $this->io->title('Resume delivery');
         $this->io->info(sprintf(
@@ -182,7 +182,7 @@ class Packager
             $conflictingCommit->getMessage()
         ));
 
-        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($context);
+        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($context, $mode);
 
         if ($gitWorkspace->hasChangesToBeCommited()) {
             $this->io->title('Applying conflict resolution before resuming delivery');

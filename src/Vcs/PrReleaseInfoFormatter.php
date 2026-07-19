@@ -5,15 +5,18 @@ namespace Ezdeliver\Vcs;
 use Ezdeliver\Model\Pr;
 
 /**
- * Formats one Pr's line in the release commit message that records what shipped.
+ * Formats the full release commit message that records what shipped.
  *
  * Only one implementation exists today (IssueSelectorReleaseInfoFormatter),
  * matching today's single selector kind (linked issue). As other selector
  * kinds are built, each may want its own release-record format - this
- * interface is the seam for that, without yet deciding how the right
- * formatter gets chosen for a given Pr.
+ * interface is the seam for that, resolved per PrSelectionMode by
+ * PrReleaseInfoFormatterFactory.
  */
 interface PrReleaseInfoFormatter
 {
-    public function format(Pr $pr): string;
+    /**
+     * @param array<Pr> $prsDelivered
+     */
+    public function formatReleaseMessage(array $prsDelivered): string;
 }

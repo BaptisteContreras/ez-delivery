@@ -96,13 +96,7 @@ class GitWorkspace
     {
         $this->io->info('write release info in current branch');
 
-        $gitMessage = sprintf('AUTO RELEASE %s', PHP_EOL);
-        $gitMessage .= sprintf('Number of PRs delivered : %s %s', count($prsDelivered), PHP_EOL);
-        $gitMessage .= sprintf('PR #ID, Issue #ID, Issue title, Number of commit, [Commits] %s%s%s', PHP_EOL, PHP_EOL, PHP_EOL);
-
-        foreach ($prsDelivered as $pr) {
-            $gitMessage .= $this->prReleaseInfoFormatter->format($pr);
-        }
+        $gitMessage = $this->prReleaseInfoFormatter->formatReleaseMessage($prsDelivered);
 
         $this->verbose('git commit', $this->gitDriver->commit($this->context, $gitMessage, true));
     }
