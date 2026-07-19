@@ -52,6 +52,6 @@ ENV EZ_DELIVERY_CONFIG_PATH='/home/ez-delivery/.ez'
 RUN useradd -u 3000 -s /bin/sh -m ez-delivery
 
 COPY prod/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
