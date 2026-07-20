@@ -9,9 +9,9 @@ class GithubRepoConfig extends ProjectRepoConfig
     public function __construct(
         private readonly string $owner,
         string $name,
-        string $apiToken,
+        string $apiTokenRef,
     ) {
-        parent::__construct($name, $apiToken, self::TYPE);
+        parent::__construct($name, $apiTokenRef, self::TYPE);
     }
 
     public function getOwner(): string

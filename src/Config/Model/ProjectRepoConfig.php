@@ -15,7 +15,7 @@ abstract class ProjectRepoConfig
 {
     public function __construct(
         private readonly string $name,
-        private readonly string $apiToken,
+        private readonly string $apiTokenRef,
         private readonly string $type,
     ) {
     }
@@ -25,9 +25,9 @@ abstract class ProjectRepoConfig
         return $this->name;
     }
 
-    public function getApiToken(): string
+    public function getApiTokenRef(): string
     {
-        return $this->apiToken;
+        return $this->apiTokenRef;
     }
 
     public function getType(): string

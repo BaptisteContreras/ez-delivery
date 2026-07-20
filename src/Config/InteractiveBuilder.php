@@ -9,6 +9,7 @@ use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Const\Interactive;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class InteractiveBuilder
@@ -16,6 +17,7 @@ class InteractiveBuilder
     public function __construct(
         private readonly SymfonyStyle $io,
         private readonly StorageHandler $storageHandler,
+        private readonly TokenVault $tokenVault,
     ) {
     }
 
@@ -68,15 +70,39 @@ class InteractiveBuilder
             GitlabRepoConfig::TYPE => new GitlabRepoConfig(
                 namespace: $this->getRequiredValue('Repository namepsace'),
                 name: $this->getRequiredValue('Repository name'),
-                apiToken: $this->getRequiredValue('Gitlab token'),
+                apiTokenRef: $this->getApiTokenRef(),
                 mode: $this->getPrSelectionMode(),
             ),
             GithubRepoConfig::TYPE => new GithubRepoConfig(
                 owner: $this->getRequiredValue('Repository owner'),
                 name: $this->getRequiredValue('Repository name'),
-                apiToken: $this->getRequiredValue('Github personal token'),
+                apiTokenRef: $this->getApiTokenRef(),
             ),
         };
+    }
+
+    private function getApiTokenRef(): string
+    {
+        $existingRefs = $this->tokenVault->listRefs();
+
+        if (empty($existingRefs)) {
+            return $this->createNewTokenRef();
+        }
+
+        return match ($this->io->choice('Use an existing token or create a new one?', ['existing', 'new'], 'existing')) {
+            'existing' => $this->io->choice('Which token?', $existingRefs),
+            'new' => $this->createNewTokenRef(),
+        };
+    }
+
+    private function createNewTokenRef(): string
+    {
+        $ref = $this->getRequiredValue('Token reference name (e.g. "gitlab-mycompany")');
+        $token = $this->io->askHidden('Token value');
+
+        $this->tokenVault->set($ref, $token);
+
+        return $ref;
     }
 
     private function getPrSelectionMode(): PrSelectionMode

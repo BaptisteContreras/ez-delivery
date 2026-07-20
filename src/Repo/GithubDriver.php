@@ -5,6 +5,7 @@ namespace Ezdeliver\Repo;
 use Ezdeliver\Config\Model\GithubRepoConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Repo\Converter\GithubRawDataConverter;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function Castor\http_request;
@@ -13,6 +14,7 @@ class GithubDriver implements RemoteRepoDriver
 {
     public function __construct(
         private readonly SymfonyStyle $io,
+        private readonly TokenVault $tokenVault,
     ) {
     }
 
@@ -39,7 +41,7 @@ class GithubDriver implements RemoteRepoDriver
                     }
                   }', $projectRepoConfig->getOwner(), $projectRepoConfig->getName()),
             'headers' => [
-                'Authorization' => sprintf('bearer %s', $projectRepoConfig->getApiToken()),
+                'Authorization' => sprintf('bearer %s', $this->tokenVault->get($projectRepoConfig->getApiTokenRef())),
             ],
         ])->getContent(), true);
 

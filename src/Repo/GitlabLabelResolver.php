@@ -3,6 +3,7 @@
 namespace Ezdeliver\Repo;
 
 use Ezdeliver\Config\Model\GitlabRepoConfig;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function Castor\http_request;
@@ -11,6 +12,7 @@ final class GitlabLabelResolver
 {
     public function __construct(
         private readonly SymfonyStyle $io,
+        private readonly TokenVault $tokenVault,
     ) {
     }
 
@@ -23,7 +25,7 @@ final class GitlabLabelResolver
 
         $labelList = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+                'PRIVATE-TOKEN' => $this->tokenVault->get($projectRepoConfig->getApiTokenRef()),
             ],
             'json' => ['query' => $labelListQuery],
         ])->getContent(), true);

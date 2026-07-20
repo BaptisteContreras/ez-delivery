@@ -9,10 +9,10 @@ class GitlabRepoConfig extends ProjectRepoConfig
     public function __construct(
         private readonly string $namespace,
         string $name,
-        string $apiToken,
+        string $apiTokenRef,
         private readonly PrSelectionMode $mode = PrSelectionMode::LinkedIssue,
     ) {
-        parent::__construct($name, $apiToken, self::TYPE);
+        parent::__construct($name, $apiTokenRef, self::TYPE);
     }
 
     public function getNamespace(): string

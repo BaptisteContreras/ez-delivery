@@ -4,9 +4,11 @@ namespace Ezdeliver\Factory;
 
 use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\InteractiveBuilder;
+use Ezdeliver\Config\Migration\ExtractApiTokenMigration;
 use Ezdeliver\Config\Migration\MigrationRunner;
 use Ezdeliver\Config\Migrator;
 use Ezdeliver\Config\StorageHandler;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -22,6 +24,7 @@ class ConfigHandlerFactory
     private ?InteractiveBuilder $interactiveBuilder = null;
     private ?Migrator $migrator = null;
     private ?MigrationRunner $migrationRunner = null;
+    private ?TokenVault $tokenVault = null;
 
     public function __construct(
         private readonly SymfonyStyle $io,
@@ -48,6 +51,7 @@ class ConfigHandlerFactory
         return $this->configHandler ??= new ConfigHandler(
             $this->createStorageHandler(),
             $this->createInteractiveBuilder(),
+            $this->createTokenVault(),
         );
     }
 
@@ -61,10 +65,15 @@ class ConfigHandlerFactory
         );
     }
 
+    public function createTokenVault(): TokenVault
+    {
+        return $this->tokenVault ??= new TokenVault($this->fs, sprintf('%s/tokens.json', $this->configsDirPath));
+    }
+
     private function createMigrationRunner(): MigrationRunner
     {
         return $this->migrationRunner ??= new MigrationRunner([
-            // no migrations registered yet — Ezdeliver\Config\Model\ProjectConfiguration::CURRENT_VERSION is still 1
+            new ExtractApiTokenMigration($this->createTokenVault()),
         ]);
     }
 
@@ -80,6 +89,6 @@ class ConfigHandlerFactory
 
     private function createInteractiveBuilder(): InteractiveBuilder
     {
-        return $this->interactiveBuilder ?? $this->interactiveBuilder = new InteractiveBuilder($this->io, $this->createStorageHandler());
+        return $this->interactiveBuilder ?? $this->interactiveBuilder = new InteractiveBuilder($this->io, $this->createStorageHandler(), $this->createTokenVault());
     }
 }

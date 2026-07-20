@@ -3,13 +3,20 @@
 namespace Ezdeliver\Config;
 
 use Ezdeliver\Config\Model\ProjectConfiguration;
+use Ezdeliver\Token\TokenVault;
 
 class Handler
 {
     public function __construct(
         private readonly StorageHandler $storageHandler,
         private readonly InteractiveBuilder $interactiveBuilder,
+        private readonly TokenVault $tokenVault,
     ) {
+    }
+
+    public function setToken(string $ref, string $token): void
+    {
+        $this->tokenVault->set($ref, $token);
     }
 
     public function createProjectConfig(): ProjectConfiguration

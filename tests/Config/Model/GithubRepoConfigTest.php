@@ -10,17 +10,17 @@ class GithubRepoConfigTest extends TestCase
 {
     public function testGettersReturnConstructorValues(): void
     {
-        $config = new GithubRepoConfig('owner', 'repo', 'token');
+        $config = new GithubRepoConfig('owner', 'repo', 'token-ref');
 
         $this->assertSame('owner', $config->getOwner());
         $this->assertSame('repo', $config->getName());
-        $this->assertSame('token', $config->getApiToken());
+        $this->assertSame('token-ref', $config->getApiTokenRef());
         $this->assertSame(GithubRepoConfig::TYPE, $config->getType());
     }
 
     public function testGetModeAlwaysReturnsLinkedIssue(): void
     {
-        $config = new GithubRepoConfig('owner', 'repo', 'token');
+        $config = new GithubRepoConfig('owner', 'repo', 'token-ref');
 
         $this->assertSame(PrSelectionMode::LinkedIssue, $config->getMode());
     }

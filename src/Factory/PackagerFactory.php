@@ -43,7 +43,7 @@ class PackagerFactory
             $this->getConfigsDirPathFromContext()
         );
 
-        $this->remoteRepoFactory = new RemoteRepoFactory($this->io);
+        $this->remoteRepoFactory = new RemoteRepoFactory($this->io, $this->configHandlerFactory->createTokenVault());
         $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io, new PrReleaseInfoFormatterFactory());
         $this->prDisplayStrategyFactory = new PrDisplayStrategyFactory($this->io);
     }

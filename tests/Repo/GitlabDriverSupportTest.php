@@ -9,30 +9,39 @@ use Ezdeliver\Repo\GithubDriver;
 use Ezdeliver\Repo\GitlabLabelResolver;
 use Ezdeliver\Repo\GitlabLinkedIssueDriver;
 use Ezdeliver\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Token\TokenVault;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
 
 class GitlabDriverSupportTest extends TestCase
 {
+    private function makeTokenVault(): TokenVault
+    {
+        return new TokenVault(new Filesystem(), sys_get_temp_dir().'/ez-delivery-driver-support-test-unused.json');
+    }
+
     private function makeLinkedIssueDriver(): GitlabLinkedIssueDriver
     {
         $io = $this->createMock(SymfonyStyle::class);
-        $resolver = new GitlabLabelResolver($io);
+        $tokenVault = $this->makeTokenVault();
+        $resolver = new GitlabLabelResolver($io, $tokenVault);
 
-        return new GitlabLinkedIssueDriver($io, $resolver);
+        return new GitlabLinkedIssueDriver($io, $resolver, $tokenVault);
     }
 
     private function makeMrLabelDriver(): GitlabMrLabelDriver
     {
         $io = $this->createMock(SymfonyStyle::class);
-        $resolver = new GitlabLabelResolver($io);
+        $tokenVault = $this->makeTokenVault();
+        $resolver = new GitlabLabelResolver($io, $tokenVault);
 
-        return new GitlabMrLabelDriver($io, $resolver);
+        return new GitlabMrLabelDriver($io, $resolver, $tokenVault);
     }
 
     private function makeGitlabConfig(PrSelectionMode $mode): GitlabRepoConfig
     {
-        return new GitlabRepoConfig('ns', 'repo', 'token', $mode);
+        return new GitlabRepoConfig('ns', 'repo', 'token-ref', $mode);
     }
 
     public function testLinkedIssueDriverSupportsOnlyLinkedIssueMode(): void
@@ -53,7 +62,7 @@ class GitlabDriverSupportTest extends TestCase
 
     public function testNeitherGitlabDriverSupportsGithubConfig(): void
     {
-        $githubConfig = new GithubRepoConfig('owner', 'repo', 'token');
+        $githubConfig = new GithubRepoConfig('owner', 'repo', 'token-ref');
 
         $this->assertFalse($this->makeLinkedIssueDriver()->support($githubConfig));
         $this->assertFalse($this->makeMrLabelDriver()->support($githubConfig));
@@ -61,7 +70,7 @@ class GitlabDriverSupportTest extends TestCase
 
     public function testGithubDriverDoesNotSupportGitlabConfigRegardlessOfMode(): void
     {
-        $driver = new GithubDriver($this->createMock(SymfonyStyle::class));
+        $driver = new GithubDriver($this->createMock(SymfonyStyle::class), $this->makeTokenVault());
 
         $this->assertFalse($driver->support($this->makeGitlabConfig(PrSelectionMode::LinkedIssue)));
         $this->assertFalse($driver->support($this->makeGitlabConfig(PrSelectionMode::MrLabel)));

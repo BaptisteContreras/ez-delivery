@@ -13,7 +13,7 @@ class ProjectConfigurationTest extends TestCase
         "projectName": "test-project",
         "src": "/path/to/src",
         "baseBranch": "main",
-        "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiToken": "token"},
+        "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiTokenRef": "token-ref"},
         "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver"}]
     }';
 

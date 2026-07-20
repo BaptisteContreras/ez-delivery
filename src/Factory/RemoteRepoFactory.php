@@ -8,6 +8,7 @@ use Ezdeliver\Repo\GitlabLinkedIssueDriver;
 use Ezdeliver\Repo\GitlabMrLabelDriver;
 use Ezdeliver\Repo\RemoteRepo;
 use Ezdeliver\Repo\RemoteRepoDriver;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RemoteRepoFactory
@@ -21,6 +22,7 @@ class RemoteRepoFactory
 
     public function __construct(
         private readonly SymfonyStyle $io,
+        private readonly TokenVault $tokenVault,
     ) {
     }
 
@@ -34,12 +36,12 @@ class RemoteRepoFactory
      */
     private function createRemoteRepoDrivers(): array
     {
-        $labelResolver = new GitlabLabelResolver($this->io);
+        $labelResolver = new GitlabLabelResolver($this->io, $this->tokenVault);
 
         return $this->remoteRepoDrivers ??= [
-            new GithubDriver($this->io),
-            new GitlabLinkedIssueDriver($this->io, $labelResolver),
-            new GitlabMrLabelDriver($this->io, $labelResolver),
+            new GithubDriver($this->io, $this->tokenVault),
+            new GitlabLinkedIssueDriver($this->io, $labelResolver, $this->tokenVault),
+            new GitlabMrLabelDriver($this->io, $labelResolver, $this->tokenVault),
         ];
     }
 }

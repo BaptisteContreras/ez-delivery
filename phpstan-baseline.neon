@@ -7,6 +7,12 @@ parameters:
 			path: src/Config/InteractiveBuilder.php
 
 		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: src/Config/InteractiveBuilder.php
+
+		-
 			message: '#^Method Ezdeliver\\Config\\InteractiveBuilder\:\:getRequiredValue\(\) has no return type specified\.$#'
 			identifier: missingType.return
 			count: 1

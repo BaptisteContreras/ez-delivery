@@ -13,6 +13,7 @@ GitHub or GitLab.
 - [Requirements](#requirements)
 - [Getting started](#getting-started)
 - [Configuring a project](#configuring-a-project)
+- [Managing tokens](#managing-tokens)
 - [Creating a delivery](#creating-a-delivery)
 - [Upgrading a project config](#upgrading-a-project-config)
 - [License](#license)
@@ -74,7 +75,10 @@ This asks, interactively:
 - A **project name** — how you'll refer to this project in later commands.
 - The project's **source path** and its **default base branch**.
 - The **repo type** (GitHub or GitLab), then the credentials for it: owner
-  (GitHub) or namespace (GitLab), repository name, and an API token.
+  (GitHub) or namespace (GitLab), repository name, and a **token
+  reference** — either an existing one from your token vault, or a new
+  name you pick right there (which then asks for the token value). See
+  [Managing tokens](#managing-tokens).
 - One or more **environments**, each with a name and its pair of labels:
   the "already delivered" label (what an issue gets swapped to once delivered) and
   the "to deliver" label (marks an issue as ready for this environment).
@@ -83,6 +87,31 @@ This asks, interactively:
 The resulting config is stored under `~/.ez-delivery` (or wherever
 `~/.ez-delivery` is mounted, per the alias above) and referenced by the
 project name in every later command.
+
+## Managing tokens
+
+Tokens are never stored inside a project config file — only a **reference
+name** is. The actual value lives in a separate, local-only vault
+(`tokens.json`, alongside your project configs under `~/.ez-delivery`),
+keyed by that reference name. This means:
+
+- Updating a token (e.g. after rotating it) only requires one command,
+  regardless of how many project configs reference it:
+
+  ```bash
+  ez-delivery set-token <name>
+  ```
+
+  This prompts for the new value (hidden input) and creates or overwrites
+  that vault entry.
+
+- Project config files can be shared between teammates without leaking a
+  token — each person's own vault resolves the shared reference name to
+  their own value.
+
+During `init-project-config`, you'll be asked to either reuse an existing
+reference from your vault or create a new one (which then also asks for the
+token value).
 
 ## Creating a delivery
 
@@ -122,7 +151,10 @@ ez-delivery migrate-config <project>
 
 This backs up the existing config file, then upgrades it through every
 intermediate version automatically. If the config is already current, it
-does nothing and tells you so.
+does nothing and tells you so. For example, upgrading from version 1 to 2
+extracts any embedded API token into your local token vault, reusing an
+existing vault entry automatically if one already has the same value, or
+prompting you for a reference name otherwise.
 
 ## License
 

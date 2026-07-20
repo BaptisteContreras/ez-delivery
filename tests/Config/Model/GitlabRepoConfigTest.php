@@ -14,7 +14,7 @@ class GitlabRepoConfigTest extends TestCase
         "projectName": "test-project",
         "src": "/path/to/src",
         "baseBranch": "main",
-        "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiToken": "token"},
+        "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiTokenRef": "token-ref"},
         "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver"}]
     }';
 
@@ -44,14 +44,14 @@ class GitlabRepoConfigTest extends TestCase
 
     public function testGetModeReturnsConstructorValue(): void
     {
-        $config = new GitlabRepoConfig('ns', 'repo', 'token', PrSelectionMode::MrLabel);
+        $config = new GitlabRepoConfig('ns', 'repo', 'token-ref', PrSelectionMode::MrLabel);
 
         $this->assertSame(PrSelectionMode::MrLabel, $config->getMode());
     }
 
     public function testGetModeDefaultsToLinkedIssueWhenNotProvided(): void
     {
-        $config = new GitlabRepoConfig('ns', 'repo', 'token');
+        $config = new GitlabRepoConfig('ns', 'repo', 'token-ref');
 
         $this->assertSame(PrSelectionMode::LinkedIssue, $config->getMode());
     }

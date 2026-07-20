@@ -6,6 +6,7 @@ use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
 use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Repo\Converter\GitlabRawDataConverter;
+use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 use function Castor\http_request;
@@ -15,6 +16,7 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
     public function __construct(
         private readonly SymfonyStyle $io,
         private readonly GitlabLabelResolver $labelResolver,
+        private readonly TokenVault $tokenVault,
     ) {
     }
 
@@ -55,7 +57,7 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
 
         $rawMrs = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+                'PRIVATE-TOKEN' => $this->tokenVault->get($projectRepoConfig->getApiTokenRef()),
             ],
             'json' => ['query' => $mrGraphqlQuery],
         ])->getContent(), true);
@@ -85,7 +87,7 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
 
         $rawIssues = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+                'PRIVATE-TOKEN' => $this->tokenVault->get($projectRepoConfig->getApiTokenRef()),
             ],
             'json' => ['query' => $issuesGraphqlQuery],
         ])->getContent(), true);
@@ -147,7 +149,7 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
 
         $result = json_decode(http_request('POST', 'https://gitlab.com/api/graphql', [
             'headers' => [
-                'PRIVATE-TOKEN' => $projectRepoConfig->getApiToken(),
+                'PRIVATE-TOKEN' => $this->tokenVault->get($projectRepoConfig->getApiTokenRef()),
             ],
             'json' => ['query' => $mrGraphqlQuery],
         ])->getContent(), true);
