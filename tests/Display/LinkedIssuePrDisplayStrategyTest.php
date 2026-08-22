@@ -2,10 +2,10 @@
 
 namespace Ezdeliver\Tests\Display;
 
-use Ezdeliver\Display\LinkedIssuePrDisplayStrategy;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
+use Ezdeliver\Core\Display\LinkedIssuePrDisplayStrategy;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

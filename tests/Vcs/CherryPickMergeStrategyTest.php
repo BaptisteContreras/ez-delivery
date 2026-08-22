@@ -3,12 +3,12 @@
 namespace Ezdeliver\Tests\Vcs;
 
 use Castor\Context;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Vcs\CherryPickMergeStrategy;
-use Ezdeliver\Vcs\GitDriver;
-use Ezdeliver\Vcs\Result\CherryPickResult;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Vcs\CherryPickMergeStrategy;
+use Ezdeliver\Core\Vcs\GitDriver;
+use Ezdeliver\Core\Vcs\Result\CherryPickResult;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

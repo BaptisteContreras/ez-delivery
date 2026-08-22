@@ -2,10 +2,10 @@
 
 namespace Ezdeliver\Tests\Vcs;
 
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Vcs\MrLabelReleaseInfoFormatter;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Vcs\MrLabelReleaseInfoFormatter;
 use PHPUnit\Framework\TestCase;
 
 class MrLabelReleaseInfoFormatterTest extends TestCase

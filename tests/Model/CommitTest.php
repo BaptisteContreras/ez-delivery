@@ -2,7 +2,7 @@
 
 namespace Ezdeliver\Tests\Model;
 
-use Ezdeliver\Model\Commit;
+use Ezdeliver\Core\Model\Commit;
 use PHPUnit\Framework\TestCase;
 
 class CommitTest extends TestCase

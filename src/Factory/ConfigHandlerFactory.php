@@ -6,6 +6,7 @@ use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\InteractiveBuilder;
 use Ezdeliver\Config\Migration\ExtractApiTokenMigration;
 use Ezdeliver\Config\Migration\MigrationRunner;
+use Ezdeliver\Config\Migration\RelocateToLocalDirMigration;
 use Ezdeliver\Config\Migrator;
 use Ezdeliver\Config\StorageHandler;
 use Ezdeliver\Token\TokenVault;
@@ -20,7 +21,8 @@ use function Castor\io;
 class ConfigHandlerFactory
 {
     private ?ConfigHandler $configHandler = null;
-    private ?StorageHandler $storageHandler = null;
+    private ?StorageHandler $localStorageHandler = null;
+    private ?StorageHandler $legacyStorageHandler = null;
     private ?InteractiveBuilder $interactiveBuilder = null;
     private ?Migrator $migrator = null;
     private ?MigrationRunner $migrationRunner = null;
@@ -49,16 +51,19 @@ class ConfigHandlerFactory
     public function createHandler(): ConfigHandler
     {
         return $this->configHandler ??= new ConfigHandler(
-            $this->createStorageHandler(),
+            $this->createLocalStorageHandler(),
             $this->createInteractiveBuilder(),
             $this->createTokenVault(),
+            $this->createLegacyStorageHandler(),
+            $this->createMigrator(),
         );
     }
 
     public function createMigrator(): Migrator
     {
         return $this->migrator ??= new Migrator(
-            $this->createStorageHandler(),
+            $this->createLocalStorageHandler(),
+            $this->createLegacyStorageHandler(),
             $this->createMigrationRunner(),
             $this->serializer,
             $this->io,
@@ -70,16 +75,24 @@ class ConfigHandlerFactory
         return $this->tokenVault ??= new TokenVault($this->fs, sprintf('%s/tokens.json', $this->configsDirPath));
     }
 
-    private function createMigrationRunner(): MigrationRunner
+    public function createInteractiveBuilder(): InteractiveBuilder
     {
-        return $this->migrationRunner ??= new MigrationRunner([
-            new ExtractApiTokenMigration($this->createTokenVault()),
-        ]);
+        return $this->interactiveBuilder ??= new InteractiveBuilder($this->io, $this->createLocalStorageHandler(), $this->createTokenVault());
     }
 
-    private function createStorageHandler(): StorageHandler
+    private function createLocalStorageHandler(): StorageHandler
     {
-        return $this->storageHandler ??= new StorageHandler(
+        return $this->localStorageHandler ??= new StorageHandler(
+            $this->io,
+            $this->fs,
+            $this->serializer,
+            sprintf('%s/local', $this->configsDirPath)
+        );
+    }
+
+    private function createLegacyStorageHandler(): StorageHandler
+    {
+        return $this->legacyStorageHandler ??= new StorageHandler(
             $this->io,
             $this->fs,
             $this->serializer,
@@ -87,8 +100,11 @@ class ConfigHandlerFactory
         );
     }
 
-    private function createInteractiveBuilder(): InteractiveBuilder
+    private function createMigrationRunner(): MigrationRunner
     {
-        return $this->interactiveBuilder ?? $this->interactiveBuilder = new InteractiveBuilder($this->io, $this->createStorageHandler(), $this->createTokenVault());
+        return $this->migrationRunner ??= new MigrationRunner([
+            new ExtractApiTokenMigration($this->createTokenVault()),
+            new RelocateToLocalDirMigration(),
+        ]);
     }
 }

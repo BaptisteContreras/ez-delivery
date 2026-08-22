@@ -4,13 +4,13 @@ namespace Ezdeliver\Tests\Repo;
 
 use Ezdeliver\Config\Model\ProjectEnvConfig;
 use Ezdeliver\Config\Model\ProjectRepoConfig;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Repo\DriverNotFoundException;
-use Ezdeliver\Repo\LabelsUpdate;
-use Ezdeliver\Repo\RemoteRepo;
-use Ezdeliver\Repo\RemoteRepoDriver;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Repo\DriverNotFoundException;
+use Ezdeliver\Core\Repo\LabelsUpdate;
+use Ezdeliver\Core\Repo\RemoteRepo;
+use Ezdeliver\Core\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

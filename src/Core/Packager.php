@@ -1,0 +1,336 @@
+<?php
+
+namespace Ezdeliver\Core;
+
+use Castor\Context;
+use Ezdeliver\Config\Handler as ConfigHandler;
+use Ezdeliver\Config\Model\ProjectConfiguration;
+use Ezdeliver\Config\Model\ProjectEnvConfig;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Release;
+use Ezdeliver\Core\Repo\RemoteRepo;
+use Ezdeliver\Core\Vcs\GitWorkspace;
+use Ezdeliver\Factory\GitWorkspaceFactory;
+use Ezdeliver\Factory\PrDisplayStrategyFactory;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+class Packager
+{
+    private const int RETURN_CODE_OK = 0;
+    private const int RETURN_CODE_ERROR = 1;
+    private const int RETURN_CODE_CONFLICT = 2;
+
+    public function __construct(
+        private Context $context,
+        private readonly ConfigHandler $configHandler,
+        private readonly InteractionHandler $interactionHandler,
+        private readonly StorageHandler $storageHandler,
+        private readonly SymfonyStyle $io,
+        private readonly RemoteRepo $remoteRepo,
+        private readonly GitWorkspaceFactory $gitWorkspaceFactory,
+        private readonly PrDisplayStrategyFactory $prDisplayStrategyFactory,
+        private readonly string $configsDirPath,
+    ) {
+    }
+
+    public function initProjectConfig(): void
+    {
+        $projectConfig = $this->configHandler->createProjectConfig();
+        $this->storageHandler->createProjectTmpStorageDir($projectConfig);
+    }
+
+    public function createPackage(string $project, bool $remote = false): int
+    {
+        $configVersion = $this->configHandler->peekProjectConfigVersion($project);
+
+        if (ProjectConfiguration::CURRENT_VERSION !== $configVersion) {
+            $this->io->error($configVersion < ProjectConfiguration::CURRENT_VERSION
+                ? ($remote
+                    ? sprintf(
+                        'This config (from the linked remote repo) is at version %d but this tool requires version %d. Ask its owner to update it, or edit it directly in the repo.',
+                        $configVersion, ProjectConfiguration::CURRENT_VERSION
+                    )
+                    : sprintf(
+                        'Project config is at version %d but this tool requires version %d. Run "migrate-config %s" to upgrade it.',
+                        $configVersion, ProjectConfiguration::CURRENT_VERSION, $project
+                    ))
+                : sprintf(
+                    'Project config is at version %d, which is newer than this tool supports (version %d). Please update ez-delivery.',
+                    $configVersion, ProjectConfiguration::CURRENT_VERSION
+                ));
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        $projectConfig = $this->configHandler->loadProjectConfig($project);
+        $selectedEnv = $this->interactionHandler->askToSelectEnv($projectConfig);
+        $mode = $projectConfig->getRepo()->getMode();
+
+        $currentContext = $this->context->withWorkingDirectory($projectConfig->getSrc());
+
+        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($currentContext, $mode);
+
+        if ($this->storageHandler->hasPausedDelivery($projectConfig)) {
+            $this->io->warning('Paused delivery found');
+
+            $lastRelease = $this->storageHandler->loadRelease($projectConfig);
+
+            $sameEnvForOldRelease = $lastRelease->getEnv() === $selectedEnv->getName();
+
+            if ($sameEnvForOldRelease && $this->interactionHandler->askToResumeLastRelease()) {
+                return $this->resume(
+                    $lastRelease,
+                    $currentContext,
+                    $projectConfig,
+                    $selectedEnv
+                );
+            }
+
+            if (!$sameEnvForOldRelease) {
+                $this->io->warning('Old delivery for another env, delete it...');
+            }
+
+            $this->storageHandler->purgeLastRelease($projectConfig);
+        }
+
+        if (!$gitWorkspace->isClear()) {
+            $this->io->error('current git state is not clean');
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        $prsToDeliver = $this->remoteRepo->getPrsToDeliver($projectConfig->getRepo(), $selectedEnv);
+
+        if (empty($prsToDeliver)) {
+            $this->io->warning(sprintf('No PR found for env %s', $selectedEnv->getName()));
+
+            if ($this->interactionHandler->askToCreateEmptyReleaseBranch()) {
+                return $this->createEmptyReleaseBranch($projectConfig, $selectedEnv, $gitWorkspace);
+            }
+
+            return self::RETURN_CODE_OK;
+        }
+
+        $this->io->title('About to deliver theses PRs');
+        $this->io->info(sprintf('PR selection mode: %s', $mode->value));
+        $this->prDisplayStrategyFactory->create($mode)->display($prsToDeliver);
+
+        if (!$this->interactionHandler->askToProceedRelease($selectedEnv)) {
+            $this->io->error('Delivery aborted by user');
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        $deliveryBranchName = $this->interactionHandler->askDeliveryBranchName($selectedEnv);
+        $baseBranchName = $this->interactionHandler->askBaseBranch($projectConfig);
+
+        $this->io->info(sprintf('updating %s', $baseBranchName));
+        $gitWorkspace->updateAndCheckoutBranch($baseBranchName);
+        $this->io->success(sprintf('%s is up to date', $baseBranchName));
+
+        $this->io->info(sprintf('creating delivery branch %s from %s', $deliveryBranchName, $baseBranchName));
+        $gitWorkspace->createAndCheckoutBranch($deliveryBranchName);
+        $this->io->success(sprintf('%s is created', $deliveryBranchName));
+
+        return $this->doMerge(
+            $prsToDeliver,
+            $currentContext,
+            $projectConfig,
+            $selectedEnv,
+            $gitWorkspace,
+            $deliveryBranchName
+        );
+    }
+
+    private function createEmptyReleaseBranch(
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+        GitWorkspace $gitWorkspace,
+    ): int {
+        $sourceBranchName = $this->interactionHandler->askBaseBranch($projectConfiguration);
+        $newBranchName = $this->interactionHandler->askDeliveryBranchName($selectedEnv);
+
+        $this->io->info(sprintf('updating %s', $sourceBranchName));
+        $gitWorkspace->updateAndCheckoutBranch($sourceBranchName);
+        $this->io->success(sprintf('%s is up to date', $sourceBranchName));
+
+        $this->io->info(sprintf('creating empty release branch %s from %s', $newBranchName, $sourceBranchName));
+        $gitWorkspace->createAndCheckoutBranch($newBranchName);
+        $this->io->success(sprintf('%s is created', $newBranchName));
+
+        if ($this->interactionHandler->askToPushReleaseBranch($newBranchName)) {
+            $gitWorkspace->pushRelease($newBranchName);
+
+            $this->io->success('branch pushed');
+        }
+
+        return self::RETURN_CODE_OK;
+    }
+
+    private function resume(
+        Release $release,
+        Context $context,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+    ): int {
+        $conflictingPr = $release->getConflictingPr();
+        $conflictingCommit = $release->getConflictingCommit();
+        $mode = $projectConfiguration->getRepo()->getMode();
+
+        $this->io->title('Resume delivery');
+        $this->io->info(sprintf(
+            'Delivery paused at PR #%s "%s", commit SHA(%s) "%s"',
+            $conflictingPr->getId(),
+            $conflictingPr->getTitle(),
+            $conflictingCommit->getSha(),
+            $conflictingCommit->getMessage()
+        ));
+
+        $gitWorkspace = $this->gitWorkspaceFactory->createWorkspaceWithCherryPickMergeStrategy($context, $mode);
+
+        if ($gitWorkspace->hasChangesToBeCommited()) {
+            $this->io->title('Applying conflict resolution before resuming delivery');
+            $this->io->info($gitWorkspace->getStatus());
+
+            if (!$this->interactionHandler->askToCommitChanges()) {
+                $this->io->error('Conflict resolution aborted');
+
+                return self::RETURN_CODE_ERROR;
+            }
+
+            $gitWorkspace->applyConflictResolution();
+        }
+
+        if (!$gitWorkspace->isClear()) {
+            $this->io->error('current git state is not clean');
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        $mergeResultCode = $this->doMerge(
+            $release->getPrs(),
+            $context,
+            $projectConfiguration,
+            $selectedEnv,
+            $gitWorkspace,
+            $release->getBranchName()
+        );
+
+        if (self::RETURN_CODE_OK === $mergeResultCode) {
+            $this->storageHandler->purgeLastRelease($projectConfiguration);
+        }
+
+        return $mergeResultCode;
+    }
+
+    /**
+     * @param array<Pr> $prsToDeliver
+     */
+    private function doMerge(
+        array $prsToDeliver,
+        Context $currentContext,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+        GitWorkspace $gitWorkspace,
+        string $deliveryBranchName,
+    ): int {
+        $prsMergeResult = $gitWorkspace->mergePrs($prsToDeliver);
+
+        if ($prsMergeResult->isSuccess()) {
+            return $this->handleMergeSuccess($gitWorkspace, $prsToDeliver, $deliveryBranchName, $projectConfiguration, $selectedEnv);
+        }
+
+        if ($prsMergeResult->isOnError()) {
+            $problematicPr = $prsMergeResult->getProblematicPr();
+
+            if (null === $problematicPr) {
+                throw new \LogicException('Expected a problematic PR on merge error');
+            }
+
+            $this->io->error(sprintf(
+                'Stop due to git error on pr #%s : %s',
+                $problematicPr->getId(),
+                $problematicPr->getTitle()
+            ));
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        if ($prsMergeResult->isConflicting()) {
+            $problematicPr = $prsMergeResult->getProblematicPr();
+
+            if (null === $problematicPr) {
+                throw new \LogicException('Expected a problematic PR on merge conflict');
+            }
+
+            return $this->handleMergeConflict(
+                $prsToDeliver,
+                $problematicPr,
+                $prsMergeResult->getConflictingCommit(),
+                $projectConfiguration,
+                $selectedEnv,
+                $deliveryBranchName
+            );
+        }
+
+        throw new \Exception('Unknown merge result state');
+    }
+
+    /**
+     * @param array<Pr> $prsDelivered
+     */
+    private function handleMergeSuccess(
+        GitWorkspace $gitWorkspace,
+        array $prsDelivered,
+        string $deliveryBranchName,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+    ): int {
+        $gitWorkspace->addGitReleaseInfo($prsDelivered);
+
+        if ($this->interactionHandler->askToPushReleaseBranch($deliveryBranchName)) {
+            $gitWorkspace->pushRelease($deliveryBranchName);
+
+            $this->io->success('branch pushed');
+        }
+
+        if (
+            $this->remoteRepo->supportLabelsUpdate($projectConfiguration->getRepo())
+            && $this->interactionHandler->askToUpdateLabels()
+        ) {
+            $this->remoteRepo->updateLabels($projectConfiguration->getRepo(), $prsDelivered, $selectedEnv);
+        }
+
+        return self::RETURN_CODE_OK;
+    }
+
+    /**
+     * @param array<Pr> $prsToDeliver
+     */
+    private function handleMergeConflict(
+        array $prsToDeliver,
+        Pr $problematicPr,
+        Commit $problematicCommit,
+        ProjectConfiguration $projectConfiguration,
+        ProjectEnvConfig $selectedEnv,
+        string $deliveryBranchName,
+    ): int {
+        $release = new Release(
+            $prsToDeliver,
+            $problematicPr->getId(),
+            $problematicCommit->getSha(),
+            $selectedEnv->getName(),
+            $deliveryBranchName
+        );
+
+        $this->io->info(sprintf(
+            'current delivery state stored in %s',
+            $this->storageHandler->storeRelease($release, $projectConfiguration)
+        ));
+
+        $this->io->warning('delivery pause here. Resolve conflict and restart command to resume delivery');
+
+        return self::RETURN_CODE_CONFLICT;
+    }
+}

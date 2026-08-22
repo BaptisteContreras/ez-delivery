@@ -3,15 +3,15 @@
 namespace Ezdeliver\Tests\Vcs;
 
 use Castor\Context;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Vcs\GitDriver;
-use Ezdeliver\Vcs\GitWorkspace;
-use Ezdeliver\Vcs\IssueSelectorReleaseInfoFormatter;
-use Ezdeliver\Vcs\MergeStrategyInterface;
-use Ezdeliver\Vcs\PrReleaseInfoFormatter;
-use Ezdeliver\Vcs\Result\MergeResult;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Vcs\GitDriver;
+use Ezdeliver\Core\Vcs\GitWorkspace;
+use Ezdeliver\Core\Vcs\IssueSelectorReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\MergeStrategyInterface;
+use Ezdeliver\Core\Vcs\PrReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\Result\MergeResult;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

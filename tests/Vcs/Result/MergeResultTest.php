@@ -2,8 +2,8 @@
 
 namespace Ezdeliver\Tests\Vcs\Result;
 
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Vcs\Result\MergeResult;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Vcs\Result\MergeResult;
 use PHPUnit\Framework\TestCase;
 
 class MergeResultTest extends TestCase

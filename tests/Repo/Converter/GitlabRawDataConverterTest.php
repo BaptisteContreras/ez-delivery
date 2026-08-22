@@ -2,8 +2,8 @@
 
 namespace Ezdeliver\Tests\Repo\Converter;
 
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Repo\Converter\GitlabRawDataConverter;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Repo\Converter\GitlabRawDataConverter;
 use PHPUnit\Framework\TestCase;
 
 class GitlabRawDataConverterTest extends TestCase

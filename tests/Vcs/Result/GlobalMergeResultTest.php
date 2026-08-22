@@ -2,11 +2,11 @@
 
 namespace Ezdeliver\Tests\Vcs\Result;
 
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Vcs\Result\GlobalMergeResult;
-use Ezdeliver\Vcs\Result\MergeResult;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Vcs\Result\GlobalMergeResult;
+use Ezdeliver\Core\Vcs\Result\MergeResult;
 use PHPUnit\Framework\TestCase;
 
 class GlobalMergeResultTest extends TestCase

@@ -4,9 +4,9 @@ namespace Ezdeliver\Factory;
 
 use Castor\Context;
 use Ezdeliver\Config\Model\PrSelectionMode;
-use Ezdeliver\Vcs\CherryPickMergeStrategy;
-use Ezdeliver\Vcs\GitDriver;
-use Ezdeliver\Vcs\GitWorkspace;
+use Ezdeliver\Core\Vcs\CherryPickMergeStrategy;
+use Ezdeliver\Core\Vcs\GitDriver;
+use Ezdeliver\Core\Vcs\GitWorkspace;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class GitWorkspaceFactory

@@ -11,6 +11,8 @@ class Handler
         private readonly StorageHandler $storageHandler,
         private readonly InteractiveBuilder $interactiveBuilder,
         private readonly TokenVault $tokenVault,
+        private readonly ?StorageHandler $legacyStorageHandler = null,
+        private readonly ?Migrator $migrator = null,
     ) {
     }
 
@@ -32,7 +34,7 @@ class Handler
 
     public function peekProjectConfigVersion(string $project): int
     {
-        return $this->storageHandler->peekConfigVersion($project);
+        return $this->resolveStorageHandlerForRead($project)->peekConfigVersion($project);
     }
 
     /**
@@ -40,10 +42,31 @@ class Handler
      */
     public function loadProjectConfig(string $project): ProjectConfiguration
     {
-        if (!$this->storageHandler->isProjectConfigExists($project)) {
+        return $this->resolveStorageHandlerForRead($project)->loadConfig($project);
+    }
+
+    /**
+     * Resolves the handler to read $project from, migrating it out of the legacy
+     * location first when needed — so the two callers above never read stale data.
+     *
+     * @throws ProjectConfigNotFoundException
+     */
+    private function resolveStorageHandlerForRead(string $project): StorageHandler
+    {
+        if ($this->storageHandler->isProjectConfigExists($project)) {
+            return $this->storageHandler;
+        }
+
+        if (null === $this->legacyStorageHandler || !$this->legacyStorageHandler->isProjectConfigExists($project)) {
             throw new ProjectConfigNotFoundException($project);
         }
 
-        return $this->storageHandler->loadConfig($project);
+        if (null === $this->migrator) {
+            return $this->legacyStorageHandler;
+        }
+
+        $this->migrator->migrateProjectConfig($project);
+
+        return $this->storageHandler;
     }
 }

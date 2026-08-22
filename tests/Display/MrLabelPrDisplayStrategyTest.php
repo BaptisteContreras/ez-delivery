@@ -2,10 +2,10 @@
 
 namespace Ezdeliver\Tests\Display;
 
-use Ezdeliver\Display\MrLabelPrDisplayStrategy;
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
+use Ezdeliver\Core\Display\MrLabelPrDisplayStrategy;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

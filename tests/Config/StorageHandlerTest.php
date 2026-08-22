@@ -93,4 +93,37 @@ class StorageHandlerTest extends TestCase
         $backupPath = sprintf('%s/myproject.json.bak', $this->tmpDir);
         $this->assertStringContainsString('"version":2', file_get_contents($backupPath));
     }
+
+    public function testDeleteConfigRemovesTheFile(): void
+    {
+        $this->writeConfigFile('myproject', ['projectName' => 'myproject', 'version' => 1]);
+
+        $this->makeStorageHandler()->deleteConfig('myproject');
+
+        $this->assertFileDoesNotExist(sprintf('%s/myproject.json', $this->tmpDir));
+    }
+
+    public function testDeleteConfigOnNonExistentProjectDoesNotThrow(): void
+    {
+        $this->makeStorageHandler()->deleteConfig('does-not-exist');
+
+        $this->assertFileDoesNotExist(sprintf('%s/does-not-exist.json', $this->tmpDir));
+    }
+
+    public function testDeleteBackupRemovesTheBakFile(): void
+    {
+        $this->writeConfigFile('myproject', ['projectName' => 'myproject', 'version' => 1]);
+        $this->makeStorageHandler()->backupConfig('myproject');
+
+        $this->makeStorageHandler()->deleteBackup('myproject');
+
+        $this->assertFileDoesNotExist(sprintf('%s/myproject.json.bak', $this->tmpDir));
+    }
+
+    public function testDeleteBackupOnNonExistentBackupDoesNotThrow(): void
+    {
+        $this->makeStorageHandler()->deleteBackup('does-not-exist');
+
+        $this->assertFileDoesNotExist(sprintf('%s/does-not-exist.json.bak', $this->tmpDir));
+    }
 }

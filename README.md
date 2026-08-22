@@ -14,6 +14,7 @@ GitHub or GitLab.
 - [Getting started](#getting-started)
 - [Configuring a project](#configuring-a-project)
 - [Managing tokens](#managing-tokens)
+- [Managing the remote config repo](#managing-the-remote-config-repo)
 - [Creating a delivery](#creating-a-delivery)
 - [Upgrading a project config](#upgrading-a-project-config)
 - [License](#license)
@@ -113,11 +114,51 @@ During `init-project-config`, you'll be asked to either reuse an existing
 reference from your vault or create a new one (which then also asks for the
 token value).
 
+## Managing the remote config repo
+
+Project configs can also be sourced from a single, shared GitLab repository
+instead of your local `~/.ez-delivery` configs — useful for a team that
+wants delivery configs reviewed and versioned alongside their code. It's
+strictly read-only from `ez-delivery`'s side: the repo is cloned via git
+over SSH (the same key already mounted for every other git operation this
+tool performs) and refreshed on demand via `--sync`, but never written back to. Only
+one remote repo can be linked at a time.
+
+```bash
+ez-delivery remote-config --link
+```
+
+This prompts for a **name** (yours to pick, shown back by `--info`), the
+**git URL**, and a **path prefix** — the folder inside that repo where
+config files live (same `<project>.json` format as local ones). Leave the
+prefix empty if they sit at the repo root. Linking clones the repo
+immediately. If a remote repo is already linked, you'll be asked to
+confirm before it's replaced.
+
+- `ez-delivery remote-config --info` — shows the linked repo's name, git
+  URL, path prefix, and when it was last synced, followed by every
+  project config currently available in it (from the last sync, not a
+  live network call).
+- `ez-delivery remote-config --sync` — refreshes the local clone to match
+  the repo's current default branch exactly, including configs removed or
+  changed upstream since the last sync, and records the sync time.
+- `ez-delivery remote-config --unlink` — asks for confirmation, then
+  forgets the link and deletes the local clone.
+
+An outdated remote config (see [Upgrading a project
+config](#upgrading-a-project-config)) can't be migrated locally — any local
+edit would be discarded by the next sync — so it needs to be updated in the
+repo itself.
+
 ## Creating a delivery
 
 ```bash
 ez-delivery package <project>
 ```
+
+Add `--remote` to read `<project>`'s config from the linked remote repo
+instead of your local configs — see [Managing the remote config
+repo](#managing-the-remote-config-repo).
 
 This:
 

@@ -3,9 +3,9 @@
 namespace Ezdeliver\Tests\Factory;
 
 use Ezdeliver\Config\Model\PrSelectionMode;
+use Ezdeliver\Core\Vcs\IssueSelectorReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\MrLabelReleaseInfoFormatter;
 use Ezdeliver\Factory\PrReleaseInfoFormatterFactory;
-use Ezdeliver\Vcs\IssueSelectorReleaseInfoFormatter;
-use Ezdeliver\Vcs\MrLabelReleaseInfoFormatter;
 use PHPUnit\Framework\TestCase;
 
 class PrReleaseInfoFormatterFactoryTest extends TestCase

@@ -3,9 +3,9 @@
 namespace Ezdeliver\Factory;
 
 use Ezdeliver\Config\Model\PrSelectionMode;
-use Ezdeliver\Vcs\IssueSelectorReleaseInfoFormatter;
-use Ezdeliver\Vcs\MrLabelReleaseInfoFormatter;
-use Ezdeliver\Vcs\PrReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\IssueSelectorReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\MrLabelReleaseInfoFormatter;
+use Ezdeliver\Core\Vcs\PrReleaseInfoFormatter;
 
 class PrReleaseInfoFormatterFactory
 {
