@@ -2,7 +2,7 @@
 
 namespace Ezdeliver\Tests\Vcs;
 
-use Ezdeliver\Vcs\GitDriver;
+use Ezdeliver\Core\Vcs\GitDriver;
 use PHPUnit\Framework\TestCase;
 
 class GitDriverTest extends TestCase

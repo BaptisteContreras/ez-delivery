@@ -69,17 +69,31 @@ class StorageHandler
 
     public function backupConfig(string $projectName): void
     {
-        $configPath = $this->getProjectConfigFilePath($projectName);
-        $backupPath = sprintf('%s.bak', $configPath);
+        $backupPath = $this->getBackupFilePath($projectName);
 
-        $this->fs->copy($configPath, $backupPath, true);
+        $this->fs->copy($this->getProjectConfigFilePath($projectName), $backupPath, true);
 
         $this->io->success(sprintf('Backed up config to %s', $backupPath));
+    }
+
+    public function deleteConfig(string $projectName): void
+    {
+        $this->fs->remove($this->getProjectConfigFilePath($projectName));
+    }
+
+    public function deleteBackup(string $projectName): void
+    {
+        $this->fs->remove($this->getBackupFilePath($projectName));
     }
 
     private function getProjectConfigFilePath(string $projectName): string
     {
         return sprintf('%s/%s.json', $this->configsDirPath, $projectName);
+    }
+
+    private function getBackupFilePath(string $projectName): string
+    {
+        return sprintf('%s.bak', $this->getProjectConfigFilePath($projectName));
     }
 
     private function readConfigFile(string $filePath): string

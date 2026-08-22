@@ -2,7 +2,7 @@
 
 namespace Ezdeliver\Tests\Model;
 
-use Ezdeliver\Model\Selector;
+use Ezdeliver\Core\Model\Selector;
 use PHPUnit\Framework\TestCase;
 
 class SelectorTest extends TestCase

@@ -3,8 +3,8 @@
 namespace Ezdeliver\Tests\Factory;
 
 use Ezdeliver\Config\Model\PrSelectionMode;
-use Ezdeliver\Display\LinkedIssuePrDisplayStrategy;
-use Ezdeliver\Display\MrLabelPrDisplayStrategy;
+use Ezdeliver\Core\Display\LinkedIssuePrDisplayStrategy;
+use Ezdeliver\Core\Display\MrLabelPrDisplayStrategy;
 use Ezdeliver\Factory\PrDisplayStrategyFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;

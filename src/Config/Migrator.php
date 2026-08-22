@@ -14,6 +14,7 @@ class Migrator
 
     public function __construct(
         private readonly StorageHandler $storageHandler,
+        private readonly StorageHandler $legacyStorageHandler,
         private readonly MigrationRunner $migrationRunner,
         private readonly SerializerInterface $serializer,
         private readonly SymfonyStyle $io,
@@ -22,11 +23,9 @@ class Migrator
 
     public function migrateProjectConfig(string $project): int
     {
-        if (!$this->storageHandler->isProjectConfigExists($project)) {
-            throw new ProjectConfigNotFoundException($project);
-        }
+        $sourceStorageHandler = $this->resolveSourceStorageHandler($project);
 
-        $currentVersion = $this->storageHandler->peekConfigVersion($project);
+        $currentVersion = $sourceStorageHandler->peekConfigVersion($project);
 
         if (ProjectConfiguration::CURRENT_VERSION === $currentVersion) {
             $this->io->info(sprintf('Project config is already at version %d, nothing to do.', $currentVersion));
@@ -44,13 +43,18 @@ class Migrator
             return self::RETURN_CODE_ERROR;
         }
 
-        $this->storageHandler->backupConfig($project);
+        $sourceStorageHandler->backupConfig($project);
 
-        $configArray = $this->storageHandler->loadConfigAsArray($project);
+        $configArray = $sourceStorageHandler->loadConfigAsArray($project);
         $migratedArray = $this->migrationRunner->migrate($configArray, $currentVersion, ProjectConfiguration::CURRENT_VERSION, $this->io);
 
         $projectConfiguration = $this->serializer->deserialize(json_encode($migratedArray), ProjectConfiguration::class, 'json');
         $this->storageHandler->saveConfig($projectConfiguration);
+
+        if ($sourceStorageHandler === $this->legacyStorageHandler) {
+            $this->legacyStorageHandler->deleteConfig($project);
+            $this->legacyStorageHandler->deleteBackup($project);
+        }
 
         $this->io->success(sprintf(
             'Project config upgraded from version %d to version %d.',
@@ -59,5 +63,21 @@ class Migrator
         ));
 
         return self::RETURN_CODE_OK;
+    }
+
+    /**
+     * @throws ProjectConfigNotFoundException
+     */
+    private function resolveSourceStorageHandler(string $project): StorageHandler
+    {
+        if ($this->storageHandler->isProjectConfigExists($project)) {
+            return $this->storageHandler;
+        }
+
+        if ($this->legacyStorageHandler->isProjectConfigExists($project)) {
+            return $this->legacyStorageHandler;
+        }
+
+        throw new ProjectConfigNotFoundException($project);
     }
 }

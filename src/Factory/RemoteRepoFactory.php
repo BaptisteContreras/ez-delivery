@@ -2,12 +2,12 @@
 
 namespace Ezdeliver\Factory;
 
-use Ezdeliver\Repo\GithubDriver;
-use Ezdeliver\Repo\GitlabLabelResolver;
-use Ezdeliver\Repo\GitlabLinkedIssueDriver;
-use Ezdeliver\Repo\GitlabMrLabelDriver;
-use Ezdeliver\Repo\RemoteRepo;
-use Ezdeliver\Repo\RemoteRepoDriver;
+use Ezdeliver\Core\Repo\GithubDriver;
+use Ezdeliver\Core\Repo\GitlabLabelResolver;
+use Ezdeliver\Core\Repo\GitlabLinkedIssueDriver;
+use Ezdeliver\Core\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Core\Repo\RemoteRepo;
+use Ezdeliver\Core\Repo\RemoteRepoDriver;
 use Ezdeliver\Token\TokenVault;
 use Symfony\Component\Console\Style\SymfonyStyle;
 

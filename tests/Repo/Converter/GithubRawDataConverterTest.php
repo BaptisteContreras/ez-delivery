@@ -2,7 +2,7 @@
 
 namespace Ezdeliver\Tests\Repo\Converter;
 
-use Ezdeliver\Repo\Converter\GithubRawDataConverter;
+use Ezdeliver\Core\Repo\Converter\GithubRawDataConverter;
 use PHPUnit\Framework\TestCase;
 
 class GithubRawDataConverterTest extends TestCase

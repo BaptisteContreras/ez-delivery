@@ -5,6 +5,7 @@ use Castor\Attribute\AsTask;
 use Castor\Context;
 use Ezdeliver\Factory\ConfigHandlerFactory;
 use Ezdeliver\Factory\PackagerFactory;
+use Ezdeliver\Factory\RemoteConfigRepoFactory;
 
 use function Castor\io;
 
@@ -26,11 +27,11 @@ function initProjectConfig(): void
 }
 
 #[AsTask(description: 'Create or resume a package')]
-function package(string $project): void
+function package(string $project, bool $remote = false): void
 {
     exit(PackagerFactory::initFromCastorGlobalContext()
-        ->createPackager()
-        ->createPackage($project));
+        ->createPackager($remote)
+        ->createPackage($project, $remote));
 }
 
 #[AsTask(description: 'Upgrade a project config to the latest version')]
@@ -50,4 +51,30 @@ function setToken(string $name): void
     ConfigHandlerFactory::initFromCastorGlobalContext()->createHandler()->setToken($name, $token);
 
     $io->success(sprintf('Token "%s" saved.', $name));
+}
+
+#[AsTask(name: 'remote-config', description: 'Link, unlink, sync, or show info about the remote config repo')]
+function remoteConfig(
+    bool $link = false,
+    bool $unlink = false,
+    bool $info = false,
+    bool $sync = false,
+): void {
+    $io = io();
+    $flagCount = (int) $link + (int) $unlink + (int) $info + (int) $sync;
+
+    if (1 !== $flagCount) {
+        $io->error('Pass exactly one of --link, --unlink, --info, --sync.');
+        exit(1);
+    }
+
+    $remoteConfigHandler = RemoteConfigRepoFactory::initFromCastorGlobalContext()->createRemoteConfigHandler();
+
+    exit(match (true) {
+        $link => $remoteConfigHandler->link(),
+        $unlink => $remoteConfigHandler->unlink(),
+        $info => $remoteConfigHandler->info(),
+        $sync => $remoteConfigHandler->sync(),
+        default => throw new \LogicException('Unreachable — flag count was validated above.'),
+    });
 }

@@ -2,10 +2,10 @@
 
 namespace Ezdeliver\Tests\Model;
 
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Release;
-use Ezdeliver\Model\Selector;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Release;
+use Ezdeliver\Core\Model\Selector;
 use PHPUnit\Framework\TestCase;
 
 class ReleaseTest extends TestCase

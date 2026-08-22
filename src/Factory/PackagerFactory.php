@@ -3,10 +3,12 @@
 namespace Ezdeliver\Factory;
 
 use Castor\Context;
-use Ezdeliver\InteractionHandler;
-use Ezdeliver\Packager;
-use Ezdeliver\StorageHandler as PackageStorageHandler;
-use Ezdeliver\Vcs\GitDriver;
+use Ezdeliver\Config\Handler as ConfigHandler;
+use Ezdeliver\Config\StorageHandler as ConfigStorageHandler;
+use Ezdeliver\Core\InteractionHandler;
+use Ezdeliver\Core\Packager;
+use Ezdeliver\Core\StorageHandler as PackageStorageHandler;
+use Ezdeliver\Core\Vcs\GitDriver;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -19,15 +21,17 @@ class PackagerFactory
     private readonly ConfigHandlerFactory $configHandlerFactory;
     private readonly SfFactory $sfFactory;
     private readonly RemoteRepoFactory $remoteRepoFactory;
+    private readonly RemoteConfigRepoFactory $remoteConfigRepoFactory;
     private readonly GitWorkspaceFactory $gitWorkspaceFactory;
     private readonly PrDisplayStrategyFactory $prDisplayStrategyFactory;
 
-    private ?PackageStorageHandler $packageStorageHandler = null;
     private ?Packager $packager = null;
 
     private ?InteractionHandler $interactionHandler = null;
 
     private ?GitDriver $gitDriver = null;
+
+    private ?PackageStorageHandler $packageStorageHandler = null;
 
     private function __construct(
         private readonly Context $context,
@@ -44,6 +48,7 @@ class PackagerFactory
         );
 
         $this->remoteRepoFactory = new RemoteRepoFactory($this->io, $this->configHandlerFactory->createTokenVault());
+        $this->remoteConfigRepoFactory = new RemoteConfigRepoFactory($this->io, $this->fs, $this->context, $this->getConfigsDirPathFromContext());
         $this->gitWorkspaceFactory = new GitWorkspaceFactory($this->createGitDriver(), $this->io, new PrReleaseInfoFormatterFactory());
         $this->prDisplayStrategyFactory = new PrDisplayStrategyFactory($this->io);
     }
@@ -57,13 +62,13 @@ class PackagerFactory
         );
     }
 
-    public function createPackager(): Packager
+    public function createPackager(bool $remote = false): Packager
     {
         return $this->packager ??= new Packager(
             $this->context,
-            $this->configHandlerFactory->createHandler(),
+            $this->createConfigHandler($remote),
             $this->createInteractionHandler(),
-            $this->createPackageStorageHandler(),
+            $this->createPackageStorageHandler($remote),
             $this->io,
             $this->remoteRepoFactory->createRemoteRepo(),
             $this->gitWorkspaceFactory,
@@ -72,18 +77,38 @@ class PackagerFactory
         );
     }
 
+    private function createConfigHandler(bool $remote): ConfigHandler
+    {
+        if (!$remote) {
+            return $this->configHandlerFactory->createHandler();
+        }
+
+        $remoteConfigsPath = $this->remoteConfigRepoFactory->createRemoteConfigRepo()->getConfigsPath();
+        $remoteStorageHandler = new ConfigStorageHandler($this->io, $this->fs, $this->sfFactory->createSfSerializer(), $remoteConfigsPath);
+
+        return new ConfigHandler(
+            $remoteStorageHandler,
+            $this->configHandlerFactory->createInteractiveBuilder(),
+            $this->configHandlerFactory->createTokenVault(),
+        );
+    }
+
     private function getConfigsDirPathFromContext(): string
     {
         return (string) $this->context->environment[CONFIG_PATH_ENV_VAR];
     }
 
-    private function createPackageStorageHandler(): PackageStorageHandler
+    private function createPackageStorageHandler(bool $remote): PackageStorageHandler
     {
+        $root = $remote
+            ? $this->remoteConfigRepoFactory->createRemoteConfigRepo()->getRemoteStatePath()
+            : sprintf('%s/local', $this->getConfigsDirPathFromContext());
+
         return $this->packageStorageHandler ??= new PackageStorageHandler(
             $this->io,
             $this->fs,
             $this->sfFactory->createSfSerializer(),
-            $this->getConfigsDirPathFromContext()
+            $root
         );
     }
 

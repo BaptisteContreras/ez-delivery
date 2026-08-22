@@ -19,43 +19,43 @@ parameters:
 			path: src/Config/InteractiveBuilder.php
 
 		-
-			message: '#^Property Ezdeliver\\Packager\:\:\$configsDirPath is never read, only written\.$#'
+			message: '#^Property Ezdeliver\\Core\\Packager\:\:\$configsDirPath is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
-			path: src/Packager.php
+			path: src/Core/Packager.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GithubRawDataConverter\:\:buildCommitFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GithubRawDataConverter\:\:buildCommitFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GithubRawDataConverter.php
+			path: src/Core/Repo/Converter/GithubRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GithubRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GithubRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GithubRawDataConverter.php
+			path: src/Core/Repo/Converter/GithubRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GithubRawDataConverter\:\:buildPrFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GithubRawDataConverter\:\:buildPrFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GithubRawDataConverter.php
+			path: src/Core/Repo/Converter/GithubRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GitlabRawDataConverter\:\:buildCommitFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GitlabRawDataConverter\:\:buildCommitFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GitlabRawDataConverter.php
+			path: src/Core/Repo/Converter/GitlabRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GitlabRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GitlabRawDataConverter\:\:buildSelectorFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GitlabRawDataConverter.php
+			path: src/Core/Repo/Converter/GitlabRawDataConverter.php
 
 		-
-			message: '#^Method Ezdeliver\\Repo\\Converter\\GitlabRawDataConverter\:\:buildPrFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
+			message: '#^Method Ezdeliver\\Core\\Repo\\Converter\\GitlabRawDataConverter\:\:buildPrFromRawData\(\) has parameter \$rawData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Repo/Converter/GitlabRawDataConverter.php
+			path: src/Core/Repo/Converter/GitlabRawDataConverter.php

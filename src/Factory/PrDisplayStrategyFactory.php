@@ -3,9 +3,9 @@
 namespace Ezdeliver\Factory;
 
 use Ezdeliver\Config\Model\PrSelectionMode;
-use Ezdeliver\Display\LinkedIssuePrDisplayStrategy;
-use Ezdeliver\Display\MrLabelPrDisplayStrategy;
-use Ezdeliver\Display\PrDisplayStrategy;
+use Ezdeliver\Core\Display\LinkedIssuePrDisplayStrategy;
+use Ezdeliver\Core\Display\MrLabelPrDisplayStrategy;
+use Ezdeliver\Core\Display\PrDisplayStrategy;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class PrDisplayStrategyFactory

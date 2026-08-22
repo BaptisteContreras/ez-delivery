@@ -2,11 +2,11 @@
 
 namespace Ezdeliver\Tests\Vcs;
 
-use Ezdeliver\Model\Commit;
-use Ezdeliver\Model\Pr;
-use Ezdeliver\Model\Selector;
-use Ezdeliver\Vcs\GitDriver;
-use Ezdeliver\Vcs\IssueSelectorReleaseInfoFormatter;
+use Ezdeliver\Core\Model\Commit;
+use Ezdeliver\Core\Model\Pr;
+use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Core\Vcs\GitDriver;
+use Ezdeliver\Core\Vcs\IssueSelectorReleaseInfoFormatter;
 use PHPUnit\Framework\TestCase;
 
 class IssueSelectorReleaseInfoFormatterTest extends TestCase
