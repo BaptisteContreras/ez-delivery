@@ -2,8 +2,10 @@
 
 namespace Ezdeliver\Factory;
 
+use Ezdeliver\Config\BranchNamePatternResolver;
 use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\InteractiveBuilder;
+use Ezdeliver\Config\Migration\AddBranchNamePatternMigration;
 use Ezdeliver\Config\Migration\ExtractApiTokenMigration;
 use Ezdeliver\Config\Migration\MigrationRunner;
 use Ezdeliver\Config\Migration\RelocateToLocalDirMigration;
@@ -27,6 +29,7 @@ class ConfigHandlerFactory
     private ?Migrator $migrator = null;
     private ?MigrationRunner $migrationRunner = null;
     private ?TokenVault $tokenVault = null;
+    private ?BranchNamePatternResolver $branchNamePatternResolver = null;
 
     public function __construct(
         private readonly SymfonyStyle $io,
@@ -77,7 +80,17 @@ class ConfigHandlerFactory
 
     public function createInteractiveBuilder(): InteractiveBuilder
     {
-        return $this->interactiveBuilder ??= new InteractiveBuilder($this->io, $this->createLocalStorageHandler(), $this->createTokenVault());
+        return $this->interactiveBuilder ??= new InteractiveBuilder(
+            $this->io,
+            $this->createLocalStorageHandler(),
+            $this->createTokenVault(),
+            $this->createBranchNamePatternResolver(),
+        );
+    }
+
+    public function createBranchNamePatternResolver(): BranchNamePatternResolver
+    {
+        return $this->branchNamePatternResolver ??= new BranchNamePatternResolver();
     }
 
     private function createLocalStorageHandler(): StorageHandler
@@ -105,6 +118,7 @@ class ConfigHandlerFactory
         return $this->migrationRunner ??= new MigrationRunner([
             new ExtractApiTokenMigration($this->createTokenVault()),
             new RelocateToLocalDirMigration(),
+            new AddBranchNamePatternMigration(),
         ]);
     }
 }

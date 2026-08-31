@@ -80,10 +80,15 @@ This asks, interactively:
   reference** — either an existing one from your token vault, or a new
   name you pick right there (which then asks for the token value). See
   [Managing tokens](#managing-tokens).
-- One or more **environments**, each with a name and its pair of labels:
+- One or more **environments**, each with a name, its pair of labels:
   the "already delivered" label (what an issue gets swapped to once delivered) and
-  the "to deliver" label (marks an issue as ready for this environment).
-  You can add as many environments as you need.
+  the "to deliver" label (marks an issue as ready for this environment), and an
+  optional **branch name pattern** used to pre-fill the delivery branch name
+  prompt. Leave it empty to keep the default (`<env>-<date>_<time>`). A pattern
+  can use these variables: `%env%` (the environment name), `%date%`
+  (`YYYY-MM-DD`), and `%date_full%` (`YYYY-MM-DD-HH-MM-SS`) — e.g.
+  `recette-%date%` becomes `recette-2026-01-01`. You can add as many
+  environments as you need.
 
 The resulting config is stored under `~/.ez-delivery` (or wherever
 `~/.ez-delivery` is mounted, per the alias above) and referenced by the

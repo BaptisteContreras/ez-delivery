@@ -50,7 +50,7 @@ class MigratorTest extends TestCase
             'src' => '/path/to/src',
             'baseBranch' => 'main',
             'repo' => ['type' => 'gitlab', 'namespace' => 'ns', 'name' => 'repo', 'apiTokenRef' => 'token-ref'],
-            'envs' => [['name' => 'staging', 'alreadyDeliveredLabel' => 'delivered', 'toDeliverLabel' => 'to-deliver']],
+            'envs' => [['name' => 'staging', 'alreadyDeliveredLabel' => 'delivered', 'toDeliverLabel' => 'to-deliver', 'branchNamePattern' => '%env%-%date_full%']],
             'version' => $version,
         ];
     }
@@ -84,7 +84,7 @@ class MigratorTest extends TestCase
 
     public function testMigrateProjectConfigUpgradesFileBackupsAndSaves(): void
     {
-        // CURRENT_VERSION is 3 today, so this test uses a synthetic "version 0" fixture,
+        // CURRENT_VERSION is 4 today, so this test uses a synthetic "version 0" fixture,
         // written directly at local/ (an already-relocated project hitting a later,
         // hypothetical schema change), plus a test-only 0->CURRENT_VERSION migration to
         // exercise the upgrade path end-to-end. Production never registers a migration this

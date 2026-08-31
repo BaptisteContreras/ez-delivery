@@ -23,7 +23,7 @@ class RemoteRepoTest extends TestCase
 
     private function makeEnv(): ProjectEnvConfig
     {
-        return new ProjectEnvConfig('staging', 'delivered:staging', 'to-deliver:staging');
+        return new ProjectEnvConfig('staging', 'delivered:staging', 'to-deliver:staging', '%env%-%date_full%');
     }
 
     private function makePr(int $id, array $selectorLabels): Pr

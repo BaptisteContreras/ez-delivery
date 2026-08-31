@@ -18,6 +18,7 @@ class InteractiveBuilder
         private readonly SymfonyStyle $io,
         private readonly StorageHandler $storageHandler,
         private readonly TokenVault $tokenVault,
+        private readonly BranchNamePatternResolver $branchNamePatternResolver,
     ) {
     }
 
@@ -137,6 +138,7 @@ class InteractiveBuilder
                 }),
                 alreadyDeliveredLabel: $this->getRequiredValue('"Already delivered" label name'),
                 toDeliverLabel: $this->getRequiredValue('"To deliver" label name'),
+                branchNamePattern: $this->askBranchNamePattern(),
             );
 
             $envs[$newEnv->getName()] = $newEnv;
@@ -145,5 +147,18 @@ class InteractiveBuilder
         } while (Interactive::YES === $this->io->choice('Add another env ?', [Interactive::YES, Interactive::NO], Interactive::YES));
 
         return array_values($envs);
+    }
+
+    private function askBranchNamePattern(): string
+    {
+        return $this->io->ask(
+            'Branch name pattern (e.g. "recette-%date%" or "%env%-%date_full%")',
+            '%env%-%date_time%',
+            function (string $value) {
+                $this->branchNamePatternResolver->validate($value);
+
+                return $value;
+            }
+        );
     }
 }

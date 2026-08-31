@@ -32,12 +32,9 @@ class InteractionHandler
             );
     }
 
-    public function askDeliveryBranchName(ProjectEnvConfig $selectedEnv): string
+    public function askDeliveryBranchName(string $defaultBranchName): string
     {
-        return $this->io->ask(
-            'Enter delivery branch name',
-            sprintf('%s-%s', $selectedEnv->getName(), (new \DateTimeImmutable())->format('Y-m-d_H-i'))
-        );
+        return $this->io->ask('Enter delivery branch name', $defaultBranchName);
     }
 
     public function askBaseBranch(ProjectConfiguration $projectConfiguration): string

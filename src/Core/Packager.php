@@ -3,6 +3,7 @@
 namespace Ezdeliver\Core;
 
 use Castor\Context;
+use Ezdeliver\Config\BranchNamePatternResolver;
 use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\Model\ProjectConfiguration;
 use Ezdeliver\Config\Model\ProjectEnvConfig;
@@ -31,6 +32,7 @@ class Packager
         private readonly GitWorkspaceFactory $gitWorkspaceFactory,
         private readonly PrDisplayStrategyFactory $prDisplayStrategyFactory,
         private readonly string $configsDirPath,
+        private readonly BranchNamePatternResolver $branchNamePatternResolver,
     ) {
     }
 
@@ -122,7 +124,9 @@ class Packager
             return self::RETURN_CODE_ERROR;
         }
 
-        $deliveryBranchName = $this->interactionHandler->askDeliveryBranchName($selectedEnv);
+        $deliveryBranchName = $this->interactionHandler->askDeliveryBranchName(
+            $this->branchNamePatternResolver->resolveDefaultBranchName($selectedEnv, new \DateTimeImmutable())
+        );
         $baseBranchName = $this->interactionHandler->askBaseBranch($projectConfig);
 
         $this->io->info(sprintf('updating %s', $baseBranchName));
@@ -149,7 +153,9 @@ class Packager
         GitWorkspace $gitWorkspace,
     ): int {
         $sourceBranchName = $this->interactionHandler->askBaseBranch($projectConfiguration);
-        $newBranchName = $this->interactionHandler->askDeliveryBranchName($selectedEnv);
+        $newBranchName = $this->interactionHandler->askDeliveryBranchName(
+            $this->branchNamePatternResolver->resolveDefaultBranchName($selectedEnv, new \DateTimeImmutable())
+        );
 
         $this->io->info(sprintf('updating %s', $sourceBranchName));
         $gitWorkspace->updateAndCheckoutBranch($sourceBranchName);
