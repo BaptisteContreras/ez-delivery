@@ -14,7 +14,7 @@ class ProjectConfigurationTest extends TestCase
         "src": "/path/to/src",
         "baseBranch": "main",
         "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiTokenRef": "token-ref"},
-        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver"}]
+        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver", "branchNamePattern": "%env%-%date_full%"}]
     }';
 
     public function testDeserializingConfigWithoutVersionDefaultsToInitialVersion(): void

@@ -73,7 +73,8 @@ class PackagerFactory
             $this->remoteRepoFactory->createRemoteRepo(),
             $this->gitWorkspaceFactory,
             $this->prDisplayStrategyFactory,
-            $this->getConfigsDirPathFromContext()
+            $this->getConfigsDirPathFromContext(),
+            $this->configHandlerFactory->createBranchNamePatternResolver(),
         );
     }
 

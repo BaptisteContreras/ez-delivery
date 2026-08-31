@@ -7,7 +7,7 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 class ProjectConfiguration
 {
     public const int INITIAL_VERSION = 1;
-    public const int CURRENT_VERSION = 3;
+    public const int CURRENT_VERSION = 4;
 
     /**
      * @param array<ProjectEnvConfig> $envs

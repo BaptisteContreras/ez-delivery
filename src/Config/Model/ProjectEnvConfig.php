@@ -8,6 +8,7 @@ class ProjectEnvConfig
         private readonly string $name,
         private readonly string $alreadyDeliveredLabel,
         private readonly string $toDeliverLabel,
+        private readonly string $branchNamePattern,
     ) {
     }
 
@@ -24,5 +25,10 @@ class ProjectEnvConfig
     public function getToDeliverLabel(): string
     {
         return $this->toDeliverLabel;
+    }
+
+    public function getBranchNamePattern(): string
+    {
+        return $this->branchNamePattern;
     }
 }
