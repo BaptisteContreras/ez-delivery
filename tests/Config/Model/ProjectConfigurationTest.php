@@ -14,7 +14,8 @@ class ProjectConfigurationTest extends TestCase
         "src": "/path/to/src",
         "baseBranch": "main",
         "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiTokenRef": "token-ref"},
-        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver", "branchNamePattern": "%env%-%date_full%"}]
+        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver", "branchNamePattern": "%env%-%date_full%", "deleteCurrentEnvReleaseBranch": false}],
+        "protectedBranches": ["master", "main"]
     }';
 
     public function testDeserializingConfigWithoutVersionDefaultsToInitialVersion(): void
@@ -39,7 +40,7 @@ class ProjectConfigurationTest extends TestCase
 
     public function testGetVersionReturnsConstructorValue(): void
     {
-        $config = new ProjectConfiguration('name', 'src', 'main', $this->createMock(ProjectRepoConfig::class), [], 3);
+        $config = new ProjectConfiguration('name', 'src', 'main', $this->createMock(ProjectRepoConfig::class), [], [], 3);
 
         $this->assertSame(3, $config->getVersion());
     }

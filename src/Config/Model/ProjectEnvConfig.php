@@ -9,6 +9,7 @@ class ProjectEnvConfig
         private readonly string $alreadyDeliveredLabel,
         private readonly string $toDeliverLabel,
         private readonly string $branchNamePattern,
+        private readonly bool $deleteCurrentEnvReleaseBranch,
     ) {
     }
 
@@ -30,5 +31,10 @@ class ProjectEnvConfig
     public function getBranchNamePattern(): string
     {
         return $this->branchNamePattern;
+    }
+
+    public function isDeleteCurrentEnvReleaseBranch(): bool
+    {
+        return $this->deleteCurrentEnvReleaseBranch;
     }
 }

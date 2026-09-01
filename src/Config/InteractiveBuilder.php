@@ -34,6 +34,7 @@ class InteractiveBuilder
                     [GithubRepoConfig::TYPE, GitlabRepoConfig::TYPE],
                     GitlabRepoConfig::TYPE)
             ),
+            protectedBranches: $this->askProtectedBranches(),
             envs: $this->getEnvs(),
             version: ProjectConfiguration::CURRENT_VERSION
         );
@@ -124,21 +125,27 @@ class InteractiveBuilder
         do {
             $this->io->title('Add new environnement');
 
+            $name = $this->io->ask('env name', validator: function ($value) use ($envs) {
+                if (empty($value)) {
+                    throw new \Exception('env name cannot be empty');
+                }
+
+                if (isset($envs[$value])) {
+                    throw new \Exception(sprintf('env %s already exists', $value));
+                }
+
+                return $value;
+            });
+            $alreadyDeliveredLabel = $this->getRequiredValue('"Already delivered" label name');
+            $toDeliverLabel = $this->getRequiredValue('"To deliver" label name');
+            $branchNamePattern = $this->askBranchNamePattern();
+
             $newEnv = new ProjectEnvConfig(
-                name: $this->io->ask('env name', validator: function ($value) use ($envs) {
-                    if (empty($value)) {
-                        throw new \Exception('env name cannot be empty');
-                    }
-
-                    if (isset($envs[$value])) {
-                        throw new \Exception(sprintf('env %s already exists', $value));
-                    }
-
-                    return $value;
-                }),
-                alreadyDeliveredLabel: $this->getRequiredValue('"Already delivered" label name'),
-                toDeliverLabel: $this->getRequiredValue('"To deliver" label name'),
-                branchNamePattern: $this->askBranchNamePattern(),
+                name: $name,
+                alreadyDeliveredLabel: $alreadyDeliveredLabel,
+                toDeliverLabel: $toDeliverLabel,
+                branchNamePattern: $branchNamePattern,
+                deleteCurrentEnvReleaseBranch: $this->askDeleteCurrentEnvReleaseBranch($branchNamePattern),
             );
 
             $envs[$newEnv->getName()] = $newEnv;
@@ -160,5 +167,33 @@ class InteractiveBuilder
                 return $value;
             }
         );
+    }
+
+    private function askDeleteCurrentEnvReleaseBranch(string $branchNamePattern): bool
+    {
+        if (!$this->branchNamePatternResolver->isStatic($branchNamePattern)) {
+            $this->io->note('Branch name pattern uses a date variable, so it changes on every delivery: deleting and recreating the release branch is not available for this env.');
+
+            return false;
+        }
+
+        return Interactive::YES === $this->io->choice(
+            'Delete the current env release branch and recreate it fresh from the base branch before each delivery ?',
+            [Interactive::YES, Interactive::NO],
+            Interactive::NO
+        );
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function askProtectedBranches(): array
+    {
+        $input = $this->io->ask(
+            'Protected branches, comma-separated (never deleted by the delete-and-recreate release branch workflow)',
+            'master, main, develop, integration'
+        );
+
+        return array_values(array_filter(array_map('trim', explode(',', $input))));
     }
 }

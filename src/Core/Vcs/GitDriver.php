@@ -47,6 +47,26 @@ class GitDriver
         run(sprintf('git push --set-upstream origin %s', $branchName), context: $context);
     }
 
+    public function branchExistsLocally(Context $context, string $branchName): bool
+    {
+        return '' !== trim(capture(['git', 'branch', '--list', $branchName], context: $context));
+    }
+
+    public function branchExistsRemotely(Context $context, string $branchName): bool
+    {
+        return '' !== trim(capture(['git', 'ls-remote', '--heads', 'origin', $branchName], context: $context));
+    }
+
+    public function deleteLocalBranch(Context $context, string $branchName): string
+    {
+        return capture(['git', 'branch', '-D', $branchName], context: $context);
+    }
+
+    public function deleteRemoteBranch(Context $context, string $branchName): string
+    {
+        return capture(['git', 'push', 'origin', '--delete', $branchName], context: $context);
+    }
+
     public function continueCkerryPick(Context $context): string
     {
         return capture('git cherry-pick --continue', context: $context);
