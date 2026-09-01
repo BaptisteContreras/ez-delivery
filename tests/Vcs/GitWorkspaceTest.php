@@ -274,4 +274,44 @@ class GitWorkspaceTest extends TestCase
 
         $this->makeWorkspace($gitDriver, io: $io)->pushRelease('release-branch');
     }
+
+    public function testBranchExistsLocallyDelegatesToGitDriver(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->expects($this->once())->method('branchExistsLocally')->with($this->anything(), 'recette')->willReturn(true);
+
+        $this->assertTrue($this->makeWorkspace($gitDriver)->branchExistsLocally('recette'));
+    }
+
+    public function testBranchExistsRemotelyDelegatesToGitDriver(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->expects($this->once())->method('branchExistsRemotely')->with($this->anything(), 'recette')->willReturn(false);
+
+        $this->assertFalse($this->makeWorkspace($gitDriver)->branchExistsRemotely('recette'));
+    }
+
+    public function testDeleteLocalBranchLogsOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('deleteLocalBranch')->willReturn('Deleted branch recette');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git branch -D: Deleted branch recette');
+
+        $this->makeWorkspace($gitDriver, io: $io)->deleteLocalBranch('recette');
+    }
+
+    public function testDeleteRemoteBranchLogsOutputWhenVerbose(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('deleteRemoteBranch')->willReturn('- [deleted] recette');
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->method('isVerbose')->willReturn(true);
+        $io->expects($this->once())->method('comment')->with('git push origin --delete: - [deleted] recette');
+
+        $this->makeWorkspace($gitDriver, io: $io)->deleteRemoteBranch('recette');
+    }
 }

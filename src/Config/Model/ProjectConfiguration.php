@@ -7,10 +7,11 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 class ProjectConfiguration
 {
     public const int INITIAL_VERSION = 1;
-    public const int CURRENT_VERSION = 4;
+    public const int CURRENT_VERSION = 6;
 
     /**
      * @param array<ProjectEnvConfig> $envs
+     * @param array<string>           $protectedBranches
      */
     public function __construct(
         private readonly string $projectName,
@@ -18,6 +19,7 @@ class ProjectConfiguration
         private readonly string $baseBranch,
         private readonly ProjectRepoConfig $repo,
         private array $envs,
+        private readonly array $protectedBranches,
         private readonly int $version = self::INITIAL_VERSION,
     ) {
     }
@@ -48,6 +50,14 @@ class ProjectConfiguration
     public function getEnvs(): array
     {
         return $this->envs;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getProtectedBranches(): array
+    {
+        return $this->protectedBranches;
     }
 
     public function getVersion(): int

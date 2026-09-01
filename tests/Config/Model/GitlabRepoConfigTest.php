@@ -15,7 +15,8 @@ class GitlabRepoConfigTest extends TestCase
         "src": "/path/to/src",
         "baseBranch": "main",
         "repo": {"type": "gitlab", "namespace": "ns", "name": "repo", "apiTokenRef": "token-ref"},
-        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver", "branchNamePattern": "%env%-%date_full%"}]
+        "envs": [{"name": "staging", "alreadyDeliveredLabel": "delivered", "toDeliverLabel": "to-deliver", "branchNamePattern": "%env%-%date_full%", "deleteCurrentEnvReleaseBranch": false}],
+        "protectedBranches": ["master", "main"]
     }';
 
     public function testDeserializingRepoConfigWithoutModeDefaultsToLinkedIssue(): void

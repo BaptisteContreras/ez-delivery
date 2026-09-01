@@ -6,6 +6,8 @@ use Ezdeliver\Config\BranchNamePatternResolver;
 use Ezdeliver\Config\Handler as ConfigHandler;
 use Ezdeliver\Config\InteractiveBuilder;
 use Ezdeliver\Config\Migration\AddBranchNamePatternMigration;
+use Ezdeliver\Config\Migration\AddDeleteCurrentEnvReleaseBranchMigration;
+use Ezdeliver\Config\Migration\AddProtectedBranchesMigration;
 use Ezdeliver\Config\Migration\ExtractApiTokenMigration;
 use Ezdeliver\Config\Migration\MigrationRunner;
 use Ezdeliver\Config\Migration\RelocateToLocalDirMigration;
@@ -119,6 +121,8 @@ class ConfigHandlerFactory
             new ExtractApiTokenMigration($this->createTokenVault()),
             new RelocateToLocalDirMigration(),
             new AddBranchNamePatternMigration(),
+            new AddDeleteCurrentEnvReleaseBranchMigration(),
+            new AddProtectedBranchesMigration(),
         ]);
     }
 }

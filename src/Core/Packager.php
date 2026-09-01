@@ -133,6 +133,12 @@ class Packager
         $gitWorkspace->updateAndCheckoutBranch($baseBranchName);
         $this->io->success(sprintf('%s is up to date', $baseBranchName));
 
+        $deleteResultCode = $this->maybeDeleteExistingReleaseBranch($selectedEnv, $projectConfig, $deliveryBranchName, $gitWorkspace);
+
+        if (self::RETURN_CODE_OK !== $deleteResultCode) {
+            return $deleteResultCode;
+        }
+
         $this->io->info(sprintf('creating delivery branch %s from %s', $deliveryBranchName, $baseBranchName));
         $gitWorkspace->createAndCheckoutBranch($deliveryBranchName);
         $this->io->success(sprintf('%s is created', $deliveryBranchName));
@@ -161,6 +167,12 @@ class Packager
         $gitWorkspace->updateAndCheckoutBranch($sourceBranchName);
         $this->io->success(sprintf('%s is up to date', $sourceBranchName));
 
+        $deleteResultCode = $this->maybeDeleteExistingReleaseBranch($selectedEnv, $projectConfiguration, $newBranchName, $gitWorkspace);
+
+        if (self::RETURN_CODE_OK !== $deleteResultCode) {
+            return $deleteResultCode;
+        }
+
         $this->io->info(sprintf('creating empty release branch %s from %s', $newBranchName, $sourceBranchName));
         $gitWorkspace->createAndCheckoutBranch($newBranchName);
         $this->io->success(sprintf('%s is created', $newBranchName));
@@ -170,6 +182,48 @@ class Packager
 
             $this->io->success('branch pushed');
         }
+
+        return self::RETURN_CODE_OK;
+    }
+
+    private function maybeDeleteExistingReleaseBranch(
+        ProjectEnvConfig $selectedEnv,
+        ProjectConfiguration $projectConfiguration,
+        string $deliveryBranchName,
+        GitWorkspace $gitWorkspace,
+    ): int {
+        if (!$selectedEnv->isDeleteCurrentEnvReleaseBranch()) {
+            return self::RETURN_CODE_OK;
+        }
+
+        $existsLocally = $gitWorkspace->branchExistsLocally($deliveryBranchName);
+        $existsRemotely = $gitWorkspace->branchExistsRemotely($deliveryBranchName);
+
+        if (!$existsLocally && !$existsRemotely) {
+            return self::RETURN_CODE_OK;
+        }
+
+        if (in_array($deliveryBranchName, $projectConfiguration->getProtectedBranches(), true)) {
+            $this->io->error(sprintf('"%s" is a protected branch and cannot be deleted. Aborting.', $deliveryBranchName));
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        if (!$this->interactionHandler->askToDeleteCurrentReleaseBranch($deliveryBranchName)) {
+            $this->io->error(sprintf('Release branch "%s" already exists and deletion was declined. Aborting.', $deliveryBranchName));
+
+            return self::RETURN_CODE_ERROR;
+        }
+
+        if ($existsLocally) {
+            $gitWorkspace->deleteLocalBranch($deliveryBranchName);
+        }
+
+        if ($existsRemotely) {
+            $gitWorkspace->deleteRemoteBranch($deliveryBranchName);
+        }
+
+        $this->io->success(sprintf('%s deleted', $deliveryBranchName));
 
         return self::RETURN_CODE_OK;
     }

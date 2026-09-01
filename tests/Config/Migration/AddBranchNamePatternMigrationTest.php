@@ -31,7 +31,7 @@ class AddBranchNamePatternMigrationTest extends TestCase
 
         $this->assertSame(4, $result['version']);
         $this->assertSame('myproject', $result['projectName']);
-        $this->assertSame('%env%-%date_full%', $result['envs'][0]['branchNamePattern']);
+        $this->assertSame('%env%-%date_time%', $result['envs'][0]['branchNamePattern']);
     }
 
     public function testMigratePreservesAnAlreadySetBranchNamePattern(): void

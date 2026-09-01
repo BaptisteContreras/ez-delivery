@@ -70,4 +70,13 @@ class InteractionHandler
             self::NO
         );
     }
+
+    public function askToDeleteCurrentReleaseBranch(string $branchName): bool
+    {
+        return self::YES === $this->io->choice(
+            sprintf('Release branch %s already exists. Delete it and recreate it from the base branch ?', $branchName),
+            [self::YES, self::NO],
+            self::YES
+        );
+    }
 }

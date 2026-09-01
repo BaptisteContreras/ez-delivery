@@ -6,7 +6,8 @@ use Ezdeliver\Config\Model\ProjectEnvConfig;
 
 final class BranchNamePatternResolver
 {
-    private const array SUPPORTED_VARIABLES = ['env', 'date', 'date_full'];
+    private const array SUPPORTED_VARIABLES = ['env', 'date', 'date_time', 'date_full'];
+    private const array DYNAMIC_VARIABLES = ['date', 'date_time', 'date_full'];
 
     public function resolveDefaultBranchName(ProjectEnvConfig $env, \DateTimeImmutable $now): string
     {
@@ -21,6 +22,18 @@ final class BranchNamePatternResolver
             '%date_time%' => $now->format('Y-m-d_H-i'),
             '%date_full%' => $now->format('Y-m-d_H-i-s'),
         ]);
+    }
+
+    /**
+     * True when the pattern contains none of the date-based variables, meaning it
+     * resolves to the same branch name on every call (a prerequisite for the
+     * delete-and-recreate release-branch workflow).
+     */
+    public function isStatic(string $pattern): bool
+    {
+        preg_match_all('/%([a-zA-Z_]+)%/', $pattern, $matches);
+
+        return [] === array_intersect($matches[1], self::DYNAMIC_VARIABLES);
     }
 
     /**

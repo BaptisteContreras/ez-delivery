@@ -54,6 +54,26 @@ class GitWorkspace
         $this->verbose('git checkout -b', $this->gitDriver->checkout($this->context, $branchName, true));
     }
 
+    public function branchExistsLocally(string $branchName): bool
+    {
+        return $this->gitDriver->branchExistsLocally($this->context, $branchName);
+    }
+
+    public function branchExistsRemotely(string $branchName): bool
+    {
+        return $this->gitDriver->branchExistsRemotely($this->context, $branchName);
+    }
+
+    public function deleteLocalBranch(string $branchName): void
+    {
+        $this->verbose('git branch -D', $this->gitDriver->deleteLocalBranch($this->context, $branchName));
+    }
+
+    public function deleteRemoteBranch(string $branchName): void
+    {
+        $this->verbose('git push origin --delete', $this->gitDriver->deleteRemoteBranch($this->context, $branchName));
+    }
+
     /**
      * @param array<Pr> $prsToDeliver
      */
