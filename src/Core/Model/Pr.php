@@ -13,6 +13,7 @@ final class Pr
         private readonly Selector $selector,
         private readonly array $commits,
         private bool $handled = false,
+        private ?int $mergeOrder = null,
     ) {
     }
 
@@ -70,5 +71,15 @@ final class Pr
     public function markHandled(): void
     {
         $this->handled = true;
+    }
+
+    public function getMergeOrder(): ?int
+    {
+        return $this->mergeOrder;
+    }
+
+    public function assignMergeOrder(?int $mergeOrder): void
+    {
+        $this->mergeOrder = $mergeOrder;
     }
 }

@@ -5,6 +5,7 @@ namespace Ezdeliver\Tests\Model;
 use Ezdeliver\Core\Model\Commit;
 use Ezdeliver\Core\Model\Pr;
 use Ezdeliver\Core\Model\Selector;
+use Ezdeliver\Factory\SfFactory;
 use PHPUnit\Framework\TestCase;
 
 class PrTest extends TestCase
@@ -78,5 +79,28 @@ class PrTest extends TestCase
         $this->assertSame(10, $pr->getSelectorId());
         $this->assertSame('issue title', $pr->getSelectorTitle());
         $this->assertSame(['bug', 'to-deliver'], $pr->getSelectorLabels());
+    }
+
+    public function testMergeOrderIsNullByDefault(): void
+    {
+        $this->assertNull((new Pr(1, 't', $this->makeSelector(), []))->getMergeOrder());
+    }
+
+    public function testAssignMergeOrder(): void
+    {
+        $pr = new Pr(1, 't', $this->makeSelector(), []);
+        $pr->assignMergeOrder(3);
+
+        $this->assertSame(3, $pr->getMergeOrder());
+    }
+
+    public function testDeserializesWithoutMergeOrderField(): void
+    {
+        $json = '{"id":1,"title":"t","selector":{"id":1,"title":"t","labels":[]},"commits":[],"handled":false}';
+
+        $pr = (new SfFactory())->createSfSerializer()->deserialize($json, Pr::class, 'json');
+
+        $this->assertInstanceOf(Pr::class, $pr);
+        $this->assertNull($pr->getMergeOrder());
     }
 }

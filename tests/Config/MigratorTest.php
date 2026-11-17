@@ -85,7 +85,7 @@ class MigratorTest extends TestCase
 
     public function testMigrateProjectConfigUpgradesFileBackupsAndSaves(): void
     {
-        // CURRENT_VERSION is 4 today, so this test uses a synthetic "version 0" fixture,
+        // Rather than depending on the real migrations, this test uses a synthetic "version 0" fixture,
         // written directly at local/ (an already-relocated project hitting a later,
         // hypothetical schema change), plus a test-only 0->CURRENT_VERSION migration to
         // exercise the upgrade path end-to-end. Production never registers a migration this

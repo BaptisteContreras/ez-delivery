@@ -6,6 +6,7 @@ use Ezdeliver\Core\Repo\GithubDriver;
 use Ezdeliver\Core\Repo\GitlabLabelResolver;
 use Ezdeliver\Core\Repo\GitlabLinkedIssueDriver;
 use Ezdeliver\Core\Repo\GitlabMrLabelDriver;
+use Ezdeliver\Core\Repo\PrMergeOrderSorter;
 use Ezdeliver\Core\Repo\RemoteRepo;
 use Ezdeliver\Core\Repo\RemoteRepoDriver;
 use Ezdeliver\Token\TokenVault;
@@ -28,7 +29,7 @@ class RemoteRepoFactory
 
     public function createRemoteRepo(): RemoteRepo
     {
-        return $this->remoteRepo ??= new RemoteRepo($this->createRemoteRepoDrivers(), $this->io);
+        return $this->remoteRepo ??= new RemoteRepo($this->createRemoteRepoDrivers(), $this->io, new PrMergeOrderSorter($this->io));
     }
 
     /**

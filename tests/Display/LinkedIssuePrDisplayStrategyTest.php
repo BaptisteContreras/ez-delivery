@@ -19,16 +19,17 @@ class LinkedIssuePrDisplayStrategyTest extends TestCase
     public function testDisplayRendersPrAndIssueColumns(): void
     {
         $pr = new Pr(42, 'PR title', new Selector(7, 'Issue title', ['to-deliver']), [$this->makeCommit(), $this->makeCommit('sha2')]);
+        $pr->assignMergeOrder(2);
 
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->once())
             ->method('table')
             ->with(
-                ['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
-                [[42, 'PR title', 7, 'Issue title', 2]]
+                ['Order', 'PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
+                [[2, 42, 'PR title', 7, 'Issue title', 2]]
             );
 
-        (new LinkedIssuePrDisplayStrategy($io))->display([$pr]);
+        (new LinkedIssuePrDisplayStrategy($io))->display([$pr], true);
     }
 
     public function testDisplayRendersOneRowPerPr(): void
@@ -40,13 +41,25 @@ class LinkedIssuePrDisplayStrategyTest extends TestCase
         $io->expects($this->once())
             ->method('table')
             ->with(
-                ['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
+                ['Order', 'PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'],
                 [
-                    [1, 'First', 10, 'Issue A', 1],
-                    [2, 'Second', 20, 'Issue B', 0],
+                    ['', 1, 'First', 10, 'Issue A', 1],
+                    ['', 2, 'Second', 20, 'Issue B', 0],
                 ]
             );
 
-        (new LinkedIssuePrDisplayStrategy($io))->display([$prOne, $prTwo]);
+        (new LinkedIssuePrDisplayStrategy($io))->display([$prOne, $prTwo], true);
+    }
+
+    public function testDisplayHidesOrderColumnWhenMergeOrderDisabled(): void
+    {
+        $pr = new Pr(1, 'First', new Selector(10, 'Issue A', []), []);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->expects($this->once())
+            ->method('table')
+            ->with(['PR #ID', 'PR title', 'issue #ID', 'issue title', 'Number of commit'], [[1, 'First', 10, 'Issue A', 0]]);
+
+        (new LinkedIssuePrDisplayStrategy($io))->display([$pr], false);
     }
 }
