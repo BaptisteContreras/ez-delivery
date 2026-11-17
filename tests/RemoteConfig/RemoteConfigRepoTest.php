@@ -4,6 +4,7 @@ namespace Ezdeliver\Tests\RemoteConfig;
 
 use Castor\Context;
 use Ezdeliver\RemoteConfig\GitDriver;
+use Ezdeliver\RemoteConfig\RemoteCloneNotFoundException;
 use Ezdeliver\RemoteConfig\RemoteConfigRepo;
 use Ezdeliver\RemoteConfig\RemotePathPrefixNotFoundException;
 use Ezdeliver\RemoteConfig\RemoteRepoLink;
@@ -292,5 +293,81 @@ class RemoteConfigRepoTest extends TestCase
         $this->expectException(RemoteRepoNotLinkedException::class);
 
         $this->makeRepo($this->makeUnlinkedStorage(), $this->createMock(GitDriver::class))->getRemoteStatePath();
+    }
+
+    public function testGetLocalChangesIsEmptyWhenCloneDirIsMissing(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->expects($this->never())->method('statusPorcelain');
+
+        $this->assertSame([], $this->makeRepo($this->makeLinkedStorage(), $gitDriver)->getLocalChanges());
+    }
+
+    public function testGetLocalChangesReportsOnlyNonEmptyKinds(): void
+    {
+        $this->fs->mkdir($this->cloneDirPathFor('my-remote'));
+
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('statusPorcelain')->willReturn("?? configs/new.json\n");
+        $gitDriver->method('unpushedCommits')->willReturn('');
+
+        $this->assertSame(
+            ['uncommitted' => '?? configs/new.json'],
+            $this->makeRepo($this->makeLinkedStorage(), $gitDriver)->getLocalChanges()
+        );
+    }
+
+    public function testIsBehindUpstreamFetchesBeforeCounting(): void
+    {
+        $this->fs->mkdir($this->cloneDirPathFor('my-remote'));
+
+        $calls = [];
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('fetch')->willReturnCallback(function () use (&$calls) {
+            $calls[] = 'fetch';
+
+            return '';
+        });
+        $gitDriver->method('countCommitsBehindUpstream')->willReturnCallback(function () use (&$calls) {
+            $calls[] = 'count';
+
+            return 3;
+        });
+
+        $this->assertTrue($this->makeRepo($this->makeLinkedStorage(), $gitDriver)->isBehindUpstream());
+        $this->assertSame(['fetch', 'count'], $calls);
+    }
+
+    public function testCommitConfigCommitsOnlyTheConfigFilePath(): void
+    {
+        $this->fs->mkdir($this->cloneDirPathFor('my-remote'));
+        $expectedPath = $this->cloneDirPathFor('my-remote').'/configs/project-a.json';
+
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('statusPorcelain')->with($this->anything(), $expectedPath)->willReturn(' M configs/project-a.json');
+        $gitDriver->expects($this->once())->method('commitPath')->with($this->isInstanceOf(Context::class), $expectedPath, 'msg');
+
+        $this->assertTrue($this->makeRepo($this->makeLinkedStorage(), $gitDriver)->commitConfig('project-a', 'msg'));
+    }
+
+    public function testCommitConfigSkipsWhenTheFileIsUnchanged(): void
+    {
+        $this->fs->mkdir($this->cloneDirPathFor('my-remote'));
+
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->method('statusPorcelain')->willReturn('');
+        $gitDriver->expects($this->never())->method('commitPath');
+
+        $this->assertFalse($this->makeRepo($this->makeLinkedStorage(), $gitDriver)->commitConfig('project-a', 'msg'));
+    }
+
+    public function testGitOperationsThrowWhenCloneDirIsMissing(): void
+    {
+        $gitDriver = $this->createMock(GitDriver::class);
+        $gitDriver->expects($this->never())->method('push');
+
+        $this->expectException(RemoteCloneNotFoundException::class);
+
+        $this->makeRepo($this->makeLinkedStorage(), $gitDriver)->push();
     }
 }

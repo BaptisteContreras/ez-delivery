@@ -95,6 +95,11 @@ class ConfigHandlerFactory
         return $this->branchNamePatternResolver ??= new BranchNamePatternResolver();
     }
 
+    public function createStorageHandlerForPath(string $configsDirPath): StorageHandler
+    {
+        return new StorageHandler($this->io, $this->fs, $this->serializer, $configsDirPath);
+    }
+
     private function createLocalStorageHandler(): StorageHandler
     {
         return $this->localStorageHandler ??= new StorageHandler(

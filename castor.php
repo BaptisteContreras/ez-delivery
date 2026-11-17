@@ -1,11 +1,13 @@
 <?php
 
 use Castor\Attribute\AsContext;
+use Castor\Attribute\AsOption;
 use Castor\Attribute\AsTask;
 use Castor\Context;
 use Ezdeliver\Factory\ConfigHandlerFactory;
 use Ezdeliver\Factory\PackagerFactory;
 use Ezdeliver\Factory\RemoteConfigRepoFactory;
+use Symfony\Component\Console\Input\InputOption;
 
 use function Castor\io;
 
@@ -53,18 +55,21 @@ function setToken(string $name): void
     $io->success(sprintf('Token "%s" saved.', $name));
 }
 
-#[AsTask(name: 'remote-config', description: 'Link, unlink, sync, or show info about the remote config repo')]
+#[AsTask(name: 'remote-config', description: 'Link, unlink, sync, upgrade, push, or show info about the remote config repo')]
 function remoteConfig(
     bool $link = false,
     bool $unlink = false,
     bool $info = false,
     bool $sync = false,
+    #[AsOption(description: 'Upgrade a remote project config to the latest version and commit it locally', mode: InputOption::VALUE_REQUIRED)]
+    ?string $upgrade = null,
+    bool $push = false,
 ): void {
     $io = io();
-    $flagCount = (int) $link + (int) $unlink + (int) $info + (int) $sync;
+    $flagCount = (int) $link + (int) $unlink + (int) $info + (int) $sync + (int) (null !== $upgrade) + (int) $push;
 
     if (1 !== $flagCount) {
-        $io->error('Pass exactly one of --link, --unlink, --info, --sync.');
+        $io->error('Pass exactly one of --link, --unlink, --info, --sync, --upgrade=<config>, --push.');
         exit(1);
     }
 
@@ -75,6 +80,8 @@ function remoteConfig(
         $unlink => $remoteConfigHandler->unlink(),
         $info => $remoteConfigHandler->info(),
         $sync => $remoteConfigHandler->sync(),
+        null !== $upgrade => $remoteConfigHandler->upgrade($upgrade),
+        $push => $remoteConfigHandler->push(),
         default => throw new \LogicException('Unreachable — flag count was validated above.'),
     });
 }

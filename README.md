@@ -123,11 +123,12 @@ token value).
 
 Project configs can also be sourced from a single, shared GitLab repository
 instead of your local `~/.ez-delivery` configs — useful for a team that
-wants delivery configs reviewed and versioned alongside their code. It's
-strictly read-only from `ez-delivery`'s side: the repo is cloned via git
-over SSH (the same key already mounted for every other git operation this
-tool performs) and refreshed on demand via `--sync`, but never written back to. Only
-one remote repo can be linked at a time.
+wants delivery configs reviewed and versioned alongside their code. The
+repo is cloned via git over SSH (the same key already mounted for every
+other git operation this tool performs) and refreshed on demand via
+`--sync`. The only thing `ez-delivery` ever writes back is a config upgrade,
+and only after you approve it with `--push`. Only one remote repo can be
+linked at a time.
 
 ```bash
 ez-delivery remote-config --link
@@ -146,14 +147,26 @@ confirm before it's replaced.
   live network call).
 - `ez-delivery remote-config --sync` — refreshes the local clone to match
   the repo's current default branch exactly, including configs removed or
-  changed upstream since the last sync, and records the sync time.
+  changed upstream since the last sync, and records the sync time. If the
+  clone holds local work (uncommitted changes, untracked files, or
+  unpushed commits such as a pending upgrade), it lists them and asks for
+  confirmation before discarding them.
+- `ez-delivery remote-config --upgrade=<project>` — upgrades `<project>`'s
+  remote config to the latest version (see [Upgrading a project
+  config](#upgrading-a-project-config)) and commits it locally, one commit
+  per config. Nothing is pushed yet. It refuses to run if the remote has
+  new commits (run `--sync` first) or if that config has uncommitted edits.
+- `ez-delivery remote-config --push` — shows the pending commits and their
+  diff, then asks for confirmation before pushing them to the repo's
+  default branch. If the push is rejected because someone pushed in the
+  meantime, run `--sync` (this discards your local commits) and redo the
+  upgrade.
 - `ez-delivery remote-config --unlink` — asks for confirmation, then
   forgets the link and deletes the local clone.
 
-An outdated remote config (see [Upgrading a project
-config](#upgrading-a-project-config)) can't be migrated locally — any local
-edit would be discarded by the next sync — so it needs to be updated in the
-repo itself.
+`migrate-config` only works on local configs. Use `--upgrade` and `--push`
+for remote ones. Once pushed, every teammate needs an `ez-delivery` version
+that supports the new config version to use it.
 
 ## Creating a delivery
 
