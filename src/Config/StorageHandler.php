@@ -5,11 +5,14 @@ namespace Ezdeliver\Config;
 use Ezdeliver\Config\Model\ProjectConfiguration;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Serializer\Encoder\JsonEncode;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class StorageHandler
 {
     private const string STORAGE_FORMAT = 'json';
+    // Config files are meant to be read and hand-edited.
+    private const int JSON_WRITE_OPTIONS = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 
     public function __construct(
         private readonly SymfonyStyle $io,
@@ -36,7 +39,10 @@ class StorageHandler
     {
         $configFilePath = $this->getProjectConfigFilePath($projectConfiguration->getProjectName());
 
-        $this->fs->dumpFile($configFilePath, $this->serializer->serialize($projectConfiguration, self::STORAGE_FORMAT));
+        $this->fs->dumpFile(
+            $configFilePath,
+            $this->serializer->serialize($projectConfiguration, self::STORAGE_FORMAT, [JsonEncode::OPTIONS => self::JSON_WRITE_OPTIONS])."\n"
+        );
 
         $this->io->success(sprintf(
             'new project config %s stored at %s',
