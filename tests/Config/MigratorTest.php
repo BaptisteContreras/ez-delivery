@@ -179,4 +179,56 @@ class MigratorTest extends TestCase
         // The legacy copy is left untouched — only the local/ copy (already current) was consulted.
         $this->assertFileExists(sprintf('%s/myproject.json', $this->legacyDir));
     }
+
+    public function testMigrateProjectConfigInPlaceWritesBackToTheSameDirWithoutBackup(): void
+    {
+        $remoteDir = $this->legacyDir.'/remote';
+        $this->writeConfigFile($remoteDir, 'myproject', $this->validConfigData(2));
+
+        $migration = $this->makeMigration(2, ProjectConfiguration::CURRENT_VERSION, function (array $config) {
+            $config['version'] = ProjectConfiguration::CURRENT_VERSION;
+
+            return $config;
+        });
+
+        $serializer = (new SfFactory())->createSfSerializer();
+        $remoteStorageHandler = new StorageHandler($this->createMock(SymfonyStyle::class), $this->fs, $serializer, $remoteDir);
+
+        $result = $this->makeMigrator([$migration])->migrateProjectConfigInPlace($remoteStorageHandler, 'myproject');
+
+        $this->assertSame(0, $result);
+        $this->assertSame(ProjectConfiguration::CURRENT_VERSION, $this->readConfigFile($remoteDir, 'myproject')['version']);
+        $this->assertFileDoesNotExist(sprintf('%s/myproject.json.bak', $remoteDir));
+        $this->assertFileDoesNotExist(sprintf('%s/myproject.json', $this->localDir));
+    }
+
+    public function testMigrateProjectConfigInPlaceRefusesWhenProjectNameDoesNotMatchFileName(): void
+    {
+        // saveConfig() names the file after projectName, so migrating "renamed.json" declaring
+        // "myproject" would leave renamed.json untouched and write a new myproject.json.
+        $remoteDir = $this->legacyDir.'/remote';
+        $this->writeConfigFile($remoteDir, 'renamed', $this->validConfigData(2));
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->expects($this->once())->method('error');
+
+        $serializer = (new SfFactory())->createSfSerializer();
+        $remoteStorageHandler = new StorageHandler($io, $this->fs, $serializer, $remoteDir);
+
+        $result = $this->makeMigrator([], $io)->migrateProjectConfigInPlace($remoteStorageHandler, 'renamed');
+
+        $this->assertSame(1, $result);
+        $this->assertSame(2, $this->readConfigFile($remoteDir, 'renamed')['version']);
+        $this->assertFileDoesNotExist(sprintf('%s/myproject.json', $remoteDir));
+    }
+
+    public function testMigrateProjectConfigInPlaceThrowsWhenProjectDoesNotExist(): void
+    {
+        $serializer = (new SfFactory())->createSfSerializer();
+        $remoteStorageHandler = new StorageHandler($this->createMock(SymfonyStyle::class), $this->fs, $serializer, $this->legacyDir.'/remote');
+
+        $this->expectException(ProjectConfigNotFoundException::class);
+
+        $this->makeMigrator([])->migrateProjectConfigInPlace($remoteStorageHandler, 'does-not-exist');
+    }
 }

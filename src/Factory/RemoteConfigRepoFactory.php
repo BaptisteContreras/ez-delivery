@@ -20,6 +20,7 @@ class RemoteConfigRepoFactory
     private ?RemoteConfigHandler $remoteConfigHandler = null;
     private ?RemoteRepoLinkStorage $remoteRepoLinkStorage = null;
     private ?GitDriver $gitDriver = null;
+    private ?ConfigHandlerFactory $configHandlerFactory = null;
 
     public function __construct(
         private readonly SymfonyStyle $io,
@@ -50,7 +51,24 @@ class RemoteConfigRepoFactory
 
     public function createRemoteConfigHandler(): RemoteConfigHandler
     {
-        return $this->remoteConfigHandler ??= new RemoteConfigHandler($this->createRemoteConfigRepo(), $this->io);
+        $configHandlerFactory = $this->createConfigHandlerFactory();
+
+        return $this->remoteConfigHandler ??= new RemoteConfigHandler(
+            $this->createRemoteConfigRepo(),
+            $this->io,
+            $configHandlerFactory->createMigrator(),
+            fn () => $configHandlerFactory->createStorageHandlerForPath($this->createRemoteConfigRepo()->getConfigsPath()),
+        );
+    }
+
+    private function createConfigHandlerFactory(): ConfigHandlerFactory
+    {
+        return $this->configHandlerFactory ??= new ConfigHandlerFactory(
+            $this->io,
+            $this->fs,
+            (new SfFactory())->createSfSerializer(),
+            $this->configsDirPath,
+        );
     }
 
     private function createRemoteRepoLinkStorage(): RemoteRepoLinkStorage

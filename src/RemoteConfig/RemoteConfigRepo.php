@@ -63,6 +63,95 @@ class RemoteConfigRepo
     }
 
     /**
+     * Describes local work `sync()` would throw away: uncommitted changes and unpushed
+     * commits. Empty array when there is nothing to lose (including when not cloned yet).
+     *
+     * @return array{uncommitted?: string, unpushed?: string}
+     */
+    public function getLocalChanges(): array
+    {
+        $cloneDirPath = $this->getCloneDirPath($this->requireLink()->getName());
+
+        if (!$this->fs->exists($cloneDirPath)) {
+            return [];
+        }
+
+        $context = $this->context->withWorkingDirectory($cloneDirPath);
+
+        return array_filter([
+            'uncommitted' => trim($this->gitDriver->statusPorcelain($context)),
+            'unpushed' => trim($this->gitDriver->unpushedCommits($context)),
+        ], fn (string $value) => '' !== $value);
+    }
+
+    /**
+     * Fetches the remote and tells whether it holds commits the clone does not have yet.
+     *
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function isBehindUpstream(): bool
+    {
+        $context = $this->requireCloneContext();
+        $this->gitDriver->fetch($context);
+
+        return $this->gitDriver->countCommitsBehindUpstream($context) > 0;
+    }
+
+    /**
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function hasUncommittedChanges(string $project): bool
+    {
+        return '' !== trim($this->gitDriver->statusPorcelain($this->requireCloneContext(), $this->getConfigFilePath($project)));
+    }
+
+    /**
+     * Commits the project's config file alone. Returns false when the file has no change to commit.
+     *
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function commitConfig(string $project, string $message): bool
+    {
+        if (!$this->hasUncommittedChanges($project)) {
+            return false;
+        }
+
+        $this->gitDriver->commitPath($this->requireCloneContext(), $this->getConfigFilePath($project), $message);
+
+        return true;
+    }
+
+    /**
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function getUnpushedCommits(): string
+    {
+        return trim($this->gitDriver->unpushedCommits($this->requireCloneContext()));
+    }
+
+    /**
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function getUnpushedDiff(): string
+    {
+        return $this->gitDriver->unpushedDiff($this->requireCloneContext());
+    }
+
+    /**
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    public function push(): void
+    {
+        $this->gitDriver->push($this->requireCloneContext());
+    }
+
+    /**
      * @return string[]
      */
     public function list(): array
@@ -109,6 +198,26 @@ class RemoteConfigRepo
     public function getRemoteStatePath(): string
     {
         return $this->getRemoteStateDirPath($this->requireLink()->getName());
+    }
+
+    private function getConfigFilePath(string $project): string
+    {
+        return sprintf('%s/%s.json', $this->getConfigsPath(), $project);
+    }
+
+    /**
+     * @throws RemoteRepoNotLinkedException
+     * @throws RemoteCloneNotFoundException
+     */
+    private function requireCloneContext(): Context
+    {
+        $cloneDirPath = $this->getCloneDirPath($this->requireLink()->getName());
+
+        if (!$this->fs->exists($cloneDirPath)) {
+            throw new RemoteCloneNotFoundException();
+        }
+
+        return $this->context->withWorkingDirectory($cloneDirPath);
     }
 
     private function getCloneDirPath(string $name): string
