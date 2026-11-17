@@ -10,7 +10,6 @@ class GitDriverTest extends TestCase
     private function buildCloneCommand(GitDriver $driver, string $url, string $targetDir): array
     {
         $method = new \ReflectionMethod(GitDriver::class, 'buildCloneCommand');
-        $method->setAccessible(true);
 
         return $method->invoke($driver, $url, $targetDir);
     }

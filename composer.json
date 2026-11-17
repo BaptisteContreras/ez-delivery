@@ -3,7 +3,7 @@
     "type": "project",
     "require": {
         "jolicode/castor": "^0.20.0",
-        "php": "^8.4",
+        "php": "^8.5",
         "symfony/serializer": "^7.4",
         "symfony/property-access": "^7.4",
         "symfony/serializer-pack": "^1.3"

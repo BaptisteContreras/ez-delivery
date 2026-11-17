@@ -10,7 +10,6 @@ class GitDriverTest extends TestCase
     private function buildCommitCommand(GitDriver $driver, string $message, bool $allowEmpty): array
     {
         $method = new \ReflectionMethod(GitDriver::class, 'buildCommitCommand');
-        $method->setAccessible(true);
 
         return $method->invoke($driver, $message, $allowEmpty);
     }

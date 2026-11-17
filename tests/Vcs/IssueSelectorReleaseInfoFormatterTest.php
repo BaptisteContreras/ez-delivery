@@ -53,7 +53,6 @@ class IssueSelectorReleaseInfoFormatterTest extends TestCase
         $message = (new IssueSelectorReleaseInfoFormatter())->formatReleaseMessage([$pr]);
 
         $buildCommitCommand = new \ReflectionMethod(GitDriver::class, 'buildCommitCommand');
-        $buildCommitCommand->setAccessible(true);
         $command = $buildCommitCommand->invoke(new GitDriver(), $message, true);
 
         $this->assertStringContainsString('"Fix the "login" bug"', $message);
