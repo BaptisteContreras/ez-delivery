@@ -2,8 +2,11 @@
 
 namespace Ezdeliver\Tests\Config;
 
+use Ezdeliver\Config\Model\GitlabRepoConfig;
 use Ezdeliver\Config\Model\ProjectConfiguration;
+use Ezdeliver\Config\Model\PrSelectionMode;
 use Ezdeliver\Config\StorageHandler;
+use Ezdeliver\Factory\SfFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
@@ -125,5 +128,28 @@ class StorageHandlerTest extends TestCase
         $this->makeStorageHandler()->deleteBackup('does-not-exist');
 
         $this->assertFileDoesNotExist(sprintf('%s/does-not-exist.json.bak', $this->tmpDir));
+    }
+
+    public function testSaveConfigWritesHumanReadableJson(): void
+    {
+        $serializer = (new SfFactory())->createSfSerializer();
+        $handler = new StorageHandler($this->createMock(SymfonyStyle::class), $this->fs, $serializer, $this->tmpDir);
+        $config = new ProjectConfiguration(
+            'myproject',
+            '/path/to/src',
+            'main',
+            new GitlabRepoConfig('ns', 'repo', 'token-ref', PrSelectionMode::MrLabel),
+            [],
+            ['main'],
+            ProjectConfiguration::CURRENT_VERSION,
+        );
+
+        $handler->saveConfig($config);
+        $content = file_get_contents(sprintf('%s/myproject.json', $this->tmpDir));
+
+        $this->assertStringStartsWith("{\n    \"projectName\": \"myproject\",\n", $content);
+        $this->assertStringContainsString('"src": "/path/to/src"', $content);
+        $this->assertStringEndsWith("}\n", $content);
+        $this->assertEquals($config, $handler->loadConfig('myproject'));
     }
 }
