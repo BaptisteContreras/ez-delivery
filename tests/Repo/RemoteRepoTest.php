@@ -9,6 +9,7 @@ use Ezdeliver\Core\Model\Pr;
 use Ezdeliver\Core\Model\Selector;
 use Ezdeliver\Core\Repo\DriverNotFoundException;
 use Ezdeliver\Core\Repo\LabelsUpdate;
+use Ezdeliver\Core\Repo\PrMergeOrderSorter;
 use Ezdeliver\Core\Repo\RemoteRepo;
 use Ezdeliver\Core\Repo\RemoteRepoDriver;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,9 @@ class RemoteRepoTest extends TestCase
 {
     private function makeRemoteRepo(array $drivers, ?SymfonyStyle $io = null): RemoteRepo
     {
-        return new RemoteRepo($drivers, $io ?? $this->createMock(SymfonyStyle::class));
+        $io ??= $this->createMock(SymfonyStyle::class);
+
+        return new RemoteRepo($drivers, $io, new PrMergeOrderSorter($io));
     }
 
     private function makeEnv(): ProjectEnvConfig
@@ -49,7 +52,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
 
         $this->assertContains($pr, $result);
     }
@@ -60,7 +63,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
 
         $this->assertContains($pr, $result);
     }
@@ -71,7 +74,7 @@ class RemoteRepoTest extends TestCase
         $driver = $this->makeDriverThatSupports([$pr]);
         $repoConfig = $this->createMock(ProjectRepoConfig::class);
 
-        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
 
         $this->assertEmpty($result);
     }
@@ -93,7 +96,7 @@ class RemoteRepoTest extends TestCase
                 $comments[] = $line;
             });
 
-        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
 
         $this->assertStringContainsString('INCLUDED', $comments[0]);
         $this->assertStringContainsString('PR #1', $comments[0]);
@@ -112,7 +115,7 @@ class RemoteRepoTest extends TestCase
         $io->method('isVerbose')->willReturn(false);
         $io->expects($this->never())->method('comment');
 
-        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $this->makeRemoteRepo([$driver], $io)->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
     }
 
     public function testUpdateLabelsSwapsToDeliverLabelForAlreadyDelivered(): void
@@ -179,6 +182,46 @@ class RemoteRepoTest extends TestCase
 
         $this->expectException(DriverNotFoundException::class);
 
-        $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv());
+        $this->makeRemoteRepo([$driver])->getPrsToDeliver($repoConfig, $this->makeEnv(), 'merge-order::');
+    }
+
+    public function testGetPrsToDeliverSortsByMergeOrder(): void
+    {
+        $driver = $this->makeDriverThatSupports([
+            $this->makePr(1, ['to-deliver:staging']),
+            $this->makePr(2, ['to-deliver:staging', 'merge-order::1']),
+        ]);
+
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($this->createMock(ProjectRepoConfig::class), $this->makeEnv(), 'merge-order::');
+
+        $this->assertSame([2, 1], array_map(fn (Pr $pr) => $pr->getId(), $result));
+    }
+
+    public function testGetPrsToDeliverReturnsListWhenFirstPrFiltered(): void
+    {
+        $driver = $this->makeDriverThatSupports([
+            $this->makePr(1, ['bug']),
+            $this->makePr(2, ['to-deliver:staging']),
+        ]);
+
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($this->createMock(ProjectRepoConfig::class), $this->makeEnv(), 'merge-order::');
+
+        $this->assertTrue(array_is_list($result));
+        $this->assertSame(2, $result[0]->getId());
+    }
+
+    public function testGetPrsToDeliverKeepsFetchOrderWhenSortDisabled(): void
+    {
+        $driver = $this->makeDriverThatSupports([
+            $this->makePr(5, ['bug']),
+            $this->makePr(3, ['to-deliver:staging']),
+            $this->makePr(1, ['to-deliver:staging', 'merge-order::1']),
+        ]);
+
+        $result = $this->makeRemoteRepo([$driver])->getPrsToDeliver($this->createMock(ProjectRepoConfig::class), $this->makeEnv(), null);
+
+        $this->assertSame([3, 1], array_map(fn (Pr $pr) => $pr->getId(), $result));
+        $this->assertTrue(array_is_list($result));
+        $this->assertNull($result[1]->getMergeOrder());
     }
 }

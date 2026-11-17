@@ -29,11 +29,26 @@ function initProjectConfig(): void
 }
 
 #[AsTask(description: 'Create or resume a package')]
-function package(string $project, bool $remote = false): void
-{
+function package(
+    string $project,
+    bool $remote = false,
+    #[AsOption(description: 'Force merge order sort for this package, whatever the project config says')]
+    bool $enableSortMr = false,
+    #[AsOption(description: 'Disable merge order sort for this package, whatever the project config says')]
+    bool $disableSortMr = false,
+): void {
+    if ($enableSortMr && $disableSortMr) {
+        io()->error('Pass at most one of --enable-sort-mr, --disable-sort-mr.');
+        exit(1);
+    }
+
     exit(PackagerFactory::initFromCastorGlobalContext()
         ->createPackager($remote)
-        ->createPackage($project, $remote));
+        ->createPackage($project, $remote, match (true) {
+            $enableSortMr => true,
+            $disableSortMr => false,
+            default => null,
+        }));
 }
 
 #[AsTask(description: 'Upgrade a project config to the latest version')]

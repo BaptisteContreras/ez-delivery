@@ -42,7 +42,10 @@ class Packager
         $this->storageHandler->createProjectTmpStorageDir($projectConfig);
     }
 
-    public function createPackage(string $project, bool $remote = false): int
+    /**
+     * @param ?bool $sortMrOverride forces merge order sort on/off for this run, null = use the project config
+     */
+    public function createPackage(string $project, bool $remote = false, ?bool $sortMrOverride = null): int
     {
         $configVersion = $this->configHandler->peekProjectConfigVersion($project);
 
@@ -102,7 +105,12 @@ class Packager
             return self::RETURN_CODE_ERROR;
         }
 
-        $prsToDeliver = $this->remoteRepo->getPrsToDeliver($projectConfig->getRepo(), $selectedEnv);
+        $sortMrEnabled = $sortMrOverride ?? $projectConfig->isEnableSortMr();
+        $prsToDeliver = $this->remoteRepo->getPrsToDeliver(
+            $projectConfig->getRepo(),
+            $selectedEnv,
+            $sortMrEnabled ? $projectConfig->getMergeOrderLabelPrefix() : null
+        );
 
         if (empty($prsToDeliver)) {
             $this->io->warning(sprintf('No PR found for env %s', $selectedEnv->getName()));
@@ -116,7 +124,7 @@ class Packager
 
         $this->io->title('About to deliver theses PRs');
         $this->io->info(sprintf('PR selection mode: %s', $mode->value));
-        $this->prDisplayStrategyFactory->create($mode)->display($prsToDeliver);
+        $this->prDisplayStrategyFactory->create($mode)->display($prsToDeliver, $sortMrEnabled);
 
         if (!$this->interactionHandler->askToProceedRelease($selectedEnv)) {
             $this->io->error('Delivery aborted by user');

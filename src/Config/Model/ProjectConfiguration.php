@@ -7,7 +7,8 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 class ProjectConfiguration
 {
     public const int INITIAL_VERSION = 1;
-    public const int CURRENT_VERSION = 6;
+    public const int CURRENT_VERSION = 7;
+    public const string DEFAULT_MERGE_ORDER_LABEL_PREFIX = 'merge-order::';
 
     /**
      * @param array<ProjectEnvConfig> $envs
@@ -21,6 +22,8 @@ class ProjectConfiguration
         private array $envs,
         private readonly array $protectedBranches,
         private readonly int $version = self::INITIAL_VERSION,
+        private readonly string $mergeOrderLabelPrefix = self::DEFAULT_MERGE_ORDER_LABEL_PREFIX,
+        private readonly bool $enableSortMr = false,
     ) {
     }
 
@@ -63,6 +66,16 @@ class ProjectConfiguration
     public function getVersion(): int
     {
         return $this->version;
+    }
+
+    public function getMergeOrderLabelPrefix(): string
+    {
+        return $this->mergeOrderLabelPrefix;
+    }
+
+    public function isEnableSortMr(): bool
+    {
+        return $this->enableSortMr;
     }
 
     #[Ignore]

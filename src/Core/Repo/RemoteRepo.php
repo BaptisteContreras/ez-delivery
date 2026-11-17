@@ -16,13 +16,14 @@ class RemoteRepo
     public function __construct(
         private readonly array $remoteRepoDrivers,
         private readonly SymfonyStyle $io,
+        private readonly PrMergeOrderSorter $mergeOrderSorter,
     ) {
     }
 
     /**
-     * @return array<Pr>
+     * @return list<Pr>
      */
-    public function getPrsToDeliver(ProjectRepoConfig $projectRepoConfig, ProjectEnvConfig $selectedEnv): array
+    public function getPrsToDeliver(ProjectRepoConfig $projectRepoConfig, ProjectEnvConfig $selectedEnv, ?string $mergeOrderLabelPrefix): array
     {
         $prs = $this->selectDriver($projectRepoConfig)->getPrs($projectRepoConfig);
 
@@ -44,7 +45,12 @@ class RemoteRepo
             return $matches;
         });
 
-        return $prsToDeliver;
+        // null = merge order sort disabled: keep the order returned by the driver.
+        if (null === $mergeOrderLabelPrefix) {
+            return array_values($prsToDeliver);
+        }
+
+        return $this->mergeOrderSorter->sort($prsToDeliver, $mergeOrderLabelPrefix);
     }
 
     public function supportLabelsUpdate(ProjectRepoConfig $projectRepoConfig): bool

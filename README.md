@@ -89,6 +89,9 @@ This asks, interactively:
   (`YYYY-MM-DD`), and `%date_full%` (`YYYY-MM-DD-HH-MM-SS`) — e.g.
   `recette-%date%` becomes `recette-2026-01-01`. You can add as many
   environments as you need.
+- A **merge order label prefix** (default `merge-order::`) and whether
+  **merge order sorting** is enabled (`enableSortMr`, off by default) — see
+  [Merge order](#merge-order).
 
 The resulting config is stored under `~/.ez-delivery` (or wherever
 `~/.ez-delivery` is mounted, per the alias above) and referenced by the
@@ -182,7 +185,8 @@ This:
 
 1. Asks which **environment** to deliver, then fetches every pull request
    whose linked issue carries that environment's "to deliver" or "already
-   delivered" label, and shows them in a table for review.
+   delivered" label, and shows them in a table for review, in the order they
+   will be cherry-picked.
 2. If **no matching pull requests** are found, offers to create an empty
    release branch anyway instead of just stopping — useful for cutting a
    release branch ahead of time even when there's nothing to deliver yet.
@@ -197,6 +201,33 @@ This:
    **updates labels** on the source issues (swapping "to deliver" for
    "already delivered"; currently GitLab-only) — both are separate yes/no prompts, so you can
    review the branch locally before either happens.
+
+### Merge order
+
+Merge order sorting is opt-in: set `"enableSortMr": true` in the project
+config (or answer yes when creating it). Override it for a single package with
+`package <project> --enable-sort-mr` or `--disable-sort-mr` (not both); the
+config isn't changed, and the flags have no effect when resuming a paused
+delivery, which keeps its original order. When it's off, pull requests are
+cherry-picked in the order GitHub/GitLab returns them, order labels are ignored,
+and the review table has no `Order` column.
+
+When it's on, add a label made of the project's **merge order label prefix**
+followed by a number, e.g. `merge-order::1`, `merge-order::2` (a GitLab scoped
+label, so an item can only carry one):
+
+- Labelled pull requests go first, by ascending number; equal numbers fall back
+  to the PR/MR number.
+- Unlabelled pull requests follow, by ascending PR/MR number.
+- The label is read where the environment labels live: on the merge request in
+  MR-label mode, on the linked issue otherwise (so MRs sharing an issue share
+  its order).
+- Invalid values (`merge-order::abc`, `merge-order::-1`, more than 9 digits)
+  are ignored with a warning. If several order labels are present (possible on
+  GitHub), the lowest wins, with a warning.
+- The order is shown in the `Order` column of the review table. It is fixed once
+  a delivery starts: resuming a paused delivery keeps the original order.
+- Delivering doesn't remove the order label.
 
 ## Upgrading a project config
 

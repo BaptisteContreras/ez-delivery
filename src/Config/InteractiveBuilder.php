@@ -36,7 +36,9 @@ class InteractiveBuilder
             ),
             protectedBranches: $this->askProtectedBranches(),
             envs: $this->getEnvs(),
-            version: ProjectConfiguration::CURRENT_VERSION
+            version: ProjectConfiguration::CURRENT_VERSION,
+            mergeOrderLabelPrefix: $this->askMergeOrderLabelPrefix(),
+            enableSortMr: $this->io->confirm('Sort MRs by merge order label before delivery?', false),
         );
     }
 
@@ -181,6 +183,21 @@ class InteractiveBuilder
             'Delete the current env release branch and recreate it fresh from the base branch before each delivery ?',
             [Interactive::YES, Interactive::NO],
             Interactive::NO
+        );
+    }
+
+    private function askMergeOrderLabelPrefix(): string
+    {
+        return $this->io->ask(
+            'Merge order label prefix (e.g. merge-order::1 is delivered first)',
+            ProjectConfiguration::DEFAULT_MERGE_ORDER_LABEL_PREFIX,
+            function ($value) {
+                if (!is_string($value) || '' === trim($value)) {
+                    throw new \RuntimeException('Merge order label prefix cannot be empty');
+                }
+
+                return trim($value);
+            }
         );
     }
 

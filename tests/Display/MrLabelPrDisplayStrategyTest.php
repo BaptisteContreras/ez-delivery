@@ -19,16 +19,17 @@ class MrLabelPrDisplayStrategyTest extends TestCase
     public function testDisplayRendersPrAndLabelsColumns(): void
     {
         $pr = new Pr(42, 'PR title', new Selector(42, 'PR title', ['to-deliver', 'backend']), [$this->makeCommit(), $this->makeCommit('sha2')]);
+        $pr->assignMergeOrder(2);
 
         $io = $this->createMock(SymfonyStyle::class);
         $io->expects($this->once())
             ->method('table')
             ->with(
-                ['PR #ID', 'PR title', 'Labels', 'Number of commit'],
-                [[42, 'PR title', 'to-deliver, backend', 2]]
+                ['Order', 'PR #ID', 'PR title', 'Labels', 'Number of commit'],
+                [[2, 42, 'PR title', 'to-deliver, backend', 2]]
             );
 
-        (new MrLabelPrDisplayStrategy($io))->display([$pr]);
+        (new MrLabelPrDisplayStrategy($io))->display([$pr], true);
     }
 
     public function testDisplayRendersEmptyLabelsAsEmptyString(): void
@@ -39,10 +40,22 @@ class MrLabelPrDisplayStrategyTest extends TestCase
         $io->expects($this->once())
             ->method('table')
             ->with(
-                ['PR #ID', 'PR title', 'Labels', 'Number of commit'],
-                [[1, 'First', '', 0]]
+                ['Order', 'PR #ID', 'PR title', 'Labels', 'Number of commit'],
+                [['', 1, 'First', '', 0]]
             );
 
-        (new MrLabelPrDisplayStrategy($io))->display([$pr]);
+        (new MrLabelPrDisplayStrategy($io))->display([$pr], true);
+    }
+
+    public function testDisplayHidesOrderColumnWhenMergeOrderDisabled(): void
+    {
+        $pr = new Pr(1, 'First', new Selector(1, 'First', []), []);
+
+        $io = $this->createMock(SymfonyStyle::class);
+        $io->expects($this->once())
+            ->method('table')
+            ->with(['PR #ID', 'PR title', 'Labels', 'Number of commit'], [[1, 'First', '', 0]]);
+
+        (new MrLabelPrDisplayStrategy($io))->display([$pr], false);
     }
 }
