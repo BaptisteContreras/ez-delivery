@@ -1,4 +1,4 @@
-FROM 'php:8.4-cli-trixie' as base
+FROM 'php:8.5-cli-trixie' as base
 
 RUN apt-get update && apt-get install -y git
 
@@ -35,7 +35,7 @@ RUN composer install -o --prefer-dist --no-cache
 
 RUN vendor/bin/castor repack --app-name ez-delivery
 
-FROM php:8.4-cli-alpine as prod
+FROM php:8.5-cli-alpine as prod
 LABEL org.opencontainers.image.source="https://github.com/BaptisteContreras/ez-delivery"
 
 RUN apk add --no-cache git openssh-client ca-certificates shadow su-exec

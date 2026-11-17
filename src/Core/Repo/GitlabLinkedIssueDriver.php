@@ -103,7 +103,8 @@ class GitlabLinkedIssueDriver implements RemoteRepoDriver
         $mrs = [];
 
         foreach ($rawMrs['data']['project']['mergeRequests']['nodes'] as $rawMr) {
-            $selector = $selectorsMap[$this->extractIssueIdFromDescription($rawMr['description'])] ?? null;
+            $issueId = $this->extractIssueIdFromDescription($rawMr['description']);
+            $selector = null === $issueId ? null : ($selectorsMap[$issueId] ?? null);
 
             if (!$selector) {
                 $this->verbose(sprintf('MR !%s "%s" skipped: no linkable issue found in description', $rawMr['iid'], $rawMr['title']));
